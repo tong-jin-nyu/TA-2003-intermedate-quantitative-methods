@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>APSTA-GE 2003: Intermediate Quantitative Methods</title>
+    <meta charset="utf-8" />
+    <meta name="date" content="2020-09-15" />
+    <script src="libs/htmlwidgets-1.5.1/htmlwidgets.js"></script>
+    <script src="libs/plotly-binding-4.9.2.1/plotly.js"></script>
+    <script src="libs/typedarray-0.1/typedarray.min.js"></script>
+    <script src="libs/jquery-1.11.3/jquery.min.js"></script>
+    <link href="libs/crosstalk-1.0.0/css/crosstalk.css" rel="stylesheet" />
+    <script src="libs/crosstalk-1.0.0/js/crosstalk.min.js"></script>
+    <link href="libs/plotly-htmlwidgets-css-1.52.2/plotly-htmlwidgets.css" rel="stylesheet" />
+    <script src="libs/plotly-main-1.52.2/plotly-latest.min.js"></script>
+    <link rel="stylesheet" href="styles.css" type="text/css" />
+    <link rel="stylesheet" href="styles-font.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# APSTA-GE 2003: Intermediate Quantitative Methods
+## Lab Section 003, Week 2
+### New York University
+### 09/15/2020
+
+---
+
+
+
+
+## Today's Topics
+
+- Statistics Review
+  - Inference of Association
+    - **Correlation/Association**
+  - Causal Inference
+    - Causation
+- Math Review
+  - Summary Statistics
+- Programming in R
+  - Levene's Test
+  - Two Sample T-test
+  - Simple Linear Regression
+
+---
+class: inverse, center, middle
+
+# Statistics Review
+
+---
+
+## What is Statistics about?
+
+- Inference
+  - **Correlation Inference**
+  - Causal Inference
+
+**Correlation:** make predictions based on the correlation of variables.
+
+**Causation:** change of one variable leads to the change of another.
+
+--
+
+**Correlation does not lead to causation!**
+
+---
+
+## Correlation Inference
+
+- On **Average**
+  - individual level variation = error, `\(\varepsilon\)`
+- Examine if `variable A` is associated with `variable B`
+  - The change of `A` is connected with the change of `B`
+
+---
+
+## Hypothesis Testing
+
+- Make an assumption
+  - The higher the salt level, the higher the blood pressure.
+  - Income level is associated with people's height.
+  
+- Make hypotheses on mean difference
+  - Null: no difference
+  - Alternative: different
+
+- Collect data and calculate summary statistics
+  - Mean, variance, standard deviation
+  - Calculate standard error
+
+- Measure how sample points deviate from (imaginary) popluation mean
+  - Use T-test
+  - Calculate p-value (chance to accept null hypothesis)
+    - if `\(&lt;0.05\)`, reject the null (**Significant difference**)
+    - if `\(\geq 0.05\)`, fail to reject the null
+
+---
+
+## Central Limit Theorem
+
+**For large population size, sample mean follows a normal distribution**
+
+$$
+\overline{x} \sim \mathcal{N} (\mu, \frac{\sigma^2}{N})
+$$
+
+&lt;img src="Lab2-Slides-091520_files/figure-html/ref-plot-CLT-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+## Regression Analysis
+
+- Make prediction based on T-test results
+  - Dependent variable (DV) and independent variable (IV)
+  - Use simple linear regression to predict DV based on IV (on avarage)
+    - `\(DV = \beta_0 + \beta_1 \times IV\)`
+    - `\(\beta_0\)`: Intercept
+    - `\(\beta_1\)`: Slope
+
+---
+class: inverse, middle, center
+
+# Math Review
+
+---
+
+## Median
+
+**The value at the center**
+
+- For odd `\(n\)`: 
+
+`$$X_\frac{n + 1}{2}$$`
+
+- For even `\(n\)`: 
+
+`$$\frac{X_\frac{n}{2} + X_\frac{n+1}{2}}{2}$$`
+
+`\(n\)`: Sample Size
+
+---
+
+## Mean
+
+**The average value**
+
+**Population Mean:**
+
+$$
+\mu = \frac{\sum_{i=1}^{N} X_i}{N}
+$$
+
+**Sample Mean:**
+
+$$
+\overline{x} = \frac{\sum_{i=1}^{n} x_i}{n}
+$$
+
+`\(N\)`: Population Size, `\(n\)`: Sample Size
+
+---
+
+## Variance
+
+**Expected squared distance from the mean**
+
+**Population Variance:**
+
+$$
+\sigma^2 = \frac{1}{N} \sum_{i=1}^{N} (x_i - \mu)^2
+$$
+
+**Sample Variance:**
+
+$$
+s^2 = \frac{1}{n-1} \sum_{i=1}^{n} (x_i - \overline{x})^2
+$$
+
+`\(N\)`: Population Size, `\(n\)`: Sample Size
+
+---
+
+## Standard Deviation (S.D.)
+
+**Expected distance from the mean**
+
+**Population SD:**
+
+$$
+\sigma = \sqrt {\text{Population Variance}}
+$$
+
+**Sample SD:**
+
+$$
+s = \sqrt {\text{Sample Variance}}
+$$
+
+---
+
+## Standard Error (S.E.)
+
+**Expected distance of sample means from population mean**
+
+**Error: individual-level variation (noise)** In this case, error is the mean variation of each sample.
+
+$$
+SE = \sqrt{\frac{Var.}{n}}
+$$
+
+$$
+SE \downarrow = \frac{SD \downarrow}{\sqrt{n}} \\
+SE \uparrow = \frac{SD \uparrow}{\sqrt{n}} \\
+$$
+
+`\(n\)`: Sample size {.smaller}
+
+---
+
+## S.E. Demo
+
+*Demo*
+
+![](Lab2-Slides-091520_files/figure-html/ref-plot1-1.png)&lt;!-- --&gt;
+
+---
+
+## Confidence Interval
+
+**Estimated population mean**
+
+with 95% of confidence, we estimate the population mean is within:
+
+$$
+(\overline{x} - 1.96 SE, \ \overline{x} + 1.96 SE)
+$$
+
+---
+
+## Pooled Variance
+
+**Weighted average of the variance of two samples by degrees of freedom**
+
+$$
+s^2_{pooled} = \frac{Var_1 + Var_2}{n_1 - 1 + n_2 - 1}
+$$
+
+---
+
+## Degrees of Freedom (d.f.)
+
+**The level of freedom that you can freely replace values**
+
+$$
+`\begin{align*}
+A &amp;= {5, 3, 4, 4} \\
+&amp;df_A = 4 \\
+\\
+\mu_A &amp;= \frac{5 + 3 + 4 + 4}{4} = 4 \\
+&amp;df_{\mu_A} = 3 \\
+\\
+\sigma_A &amp;= \frac{(5-4)^2+(3-4)^2+(4-4)^2+(4-4)^2}{df_{\mu_A}} = \frac{2}{3} 
+\end{align*}`
+$$
+
+---
+class: inverse, middle, center
+
+# Programming in R
+
+---
+
+## Levene's Test
+
+
+```r
+# install.packages("car") # Companion to Applied Regression
+library(car)
+*leveneTest(Time ~ factor(Gender), data = marathon)
+```
+
+```
+## Levene's Test for Homogeneity of Variance (center = median)
+##       Df F value Pr(&gt;F)
+## group  1  2.0379 0.1589
+##       57
+```
+
+---
+
+## Simple Linear Regression
+
+
+```r
+*lm1 &lt;- lm(Time ~ Gender, data = marathon)
+*summary(lm1)
+```
+
+```
+## 
+## Call:
+## lm(formula = Time ~ Gender, data = marathon)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -0.15511 -0.09608 -0.06150 -0.01357  0.57850 
+## 
+## Coefficients:
+##             Estimate Std. Error t value Pr(&gt;|t|)    
+*## (Intercept)  2.56622    0.03110  82.505  &lt; 2e-16 ***
+*## Genderm     -0.34557    0.04362  -7.922 9.25e-11 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.1675 on 57 degrees of freedom
+*## Multiple R-squared:  0.5241,	Adjusted R-squared:  0.5157 
+## F-statistic: 62.76 on 1 and 57 DF,  p-value: 9.248e-11
+```
+
+---
+
+## Visualizing Linear Regression
+
+<div id="htmlwidget-5ea55548d16ba2cf463c" style="width:576px;height:432px;" class="plotly html-widget"></div>
+<script type="application/json" data-for="htmlwidget-5ea55548d16ba2cf463c">{"x":{"visdat":{"9d642f9f9f1":["function () ","plotlyVisDat"]},"cur_data":"9d642f9f9f1","attrs":{"9d642f9f9f1":{"x":{},"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"y":{},"type":"scatter","mode":"markers","inherit":true},"9d642f9f9f1.1":{"x":{},"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"y":[2.22064833333333,2.22064833333333,2.22064833333333,2.22064833333333,2.22064833333333,2.22064833333333,2.22064833333333,2.22064833333333,2.22064833333333,2.22064833333333,2.22064833333333,2.22064833333333,2.22064833333333,2.22064833333333,2.22064833333333,2.22064833333333,2.22064833333333,2.22064833333333,2.22064833333333,2.22064833333333,2.56621620689655,2.56621620689655,2.56621620689655,2.56621620689655,2.56621620689655,2.56621620689655,2.56621620689655,2.56621620689655,2.56621620689655,2.56621620689655,2.56621620689655,2.56621620689655,2.56621620689655,2.56621620689655,2.56621620689655,2.56621620689655,2.56621620689655,2.56621620689655,2.56621620689655,2.56621620689655,2.22064833333333,2.22064833333333,2.22064833333333,2.22064833333333,2.22064833333333,2.22064833333333,2.22064833333333,2.22064833333333,2.22064833333333,2.22064833333333,2.56621620689655,2.56621620689655,2.56621620689655,2.56621620689655,2.56621620689655,2.56621620689655,2.56621620689655,2.56621620689655,2.56621620689655],"type":"scatter","mode":"lines","inherit":true}},"layout":{"margin":{"b":40,"l":60,"t":25,"r":10},"xaxis":{"domain":[0,1],"automargin":true,"title":"Gender","type":"category","categoryorder":"array","categoryarray":["f","m"]},"yaxis":{"domain":[0,1],"automargin":true,"title":"Time"},"hovermode":"closest","showlegend":true},"source":"A","config":{"showSendToCloud":false},"data":[{"x":["m","m","m","m","m","m","m","m","m","m","m","m","m","m","m","m","m","m","m","m","f","f","f","f","f","f","f","f","f","f","f","f","f","f","f","f","f","f","f","f","m","m","m","m","m","m","m","m","m","m","f","f","f","f","f","f","f","f","f"],"y":[2.16139,2.13694,2.15806,2.14972,2.24806,2.19278,2.185,2.18361,2.13889,2.13361,2.21083,2.15778,2.15806,2.16778,2.18917,2.18333,2.165,2.13667,2.14583,2.15389,2.42833,2.42472,2.45389,2.45,2.49167,2.47611,2.46833,2.50472,2.46861,2.425,2.5125,2.45889,2.41111,2.44,2.46028,2.46833,2.47167,2.47833,2.42139,2.41833,2.52722,2.38167,2.46444,2.365,2.44167,2.32417,2.16944,2.19111,2.20333,2.195,2.92278,3.14472,2.95194,3.12472,2.77056,2.65306,2.71944,2.54167,2.45917],"type":"scatter","mode":"markers","marker":{"color":"rgba(31,119,180,1)","line":{"color":"rgba(31,119,180,1)"}},"error_y":{"color":"rgba(31,119,180,1)"},"error_x":{"color":"rgba(31,119,180,1)"},"line":{"color":"rgba(31,119,180,1)"},"xaxis":"x","yaxis":"y","frame":null},{"x":["f","f","f","f","f","f","f","f","f","f","f","f","f","f","f","f","f","f","f","f","f","f","f","f","f","f","f","f","f","m","m","m","m","m","m","m","m","m","m","m","m","m","m","m","m","m","m","m","m","m","m","m","m","m","m","m","m","m","m"],"y":[2.56621620689655,2.56621620689655,2.56621620689655,2.56621620689655,2.56621620689655,2.56621620689655,2.56621620689655,2.56621620689655,2.56621620689655,2.56621620689655,2.56621620689655,2.56621620689655,2.56621620689655,2.56621620689655,2.56621620689655,2.56621620689655,2.56621620689655,2.56621620689655,2.56621620689655,2.56621620689655,2.56621620689655,2.56621620689655,2.56621620689655,2.56621620689655,2.56621620689655,2.56621620689655,2.56621620689655,2.56621620689655,2.56621620689655,2.22064833333333,2.22064833333333,2.22064833333333,2.22064833333333,2.22064833333333,2.22064833333333,2.22064833333333,2.22064833333333,2.22064833333333,2.22064833333333,2.22064833333333,2.22064833333333,2.22064833333333,2.22064833333333,2.22064833333333,2.22064833333333,2.22064833333333,2.22064833333333,2.22064833333333,2.22064833333333,2.22064833333333,2.22064833333333,2.22064833333333,2.22064833333333,2.22064833333333,2.22064833333333,2.22064833333333,2.22064833333333,2.22064833333333,2.22064833333333],"type":"scatter","mode":"lines","marker":{"color":"rgba(255,127,14,1)","line":{"color":"rgba(255,127,14,1)"}},"error_y":{"color":"rgba(255,127,14,1)"},"error_x":{"color":"rgba(255,127,14,1)"},"line":{"color":"rgba(255,127,14,1)"},"xaxis":"x","yaxis":"y","frame":null}],"highlight":{"on":"plotly_click","persistent":false,"dynamic":false,"selectize":false,"opacityDim":0.2,"selected":{"opacity":1},"debounce":0},"shinyEvents":["plotly_hover","plotly_click","plotly_selected","plotly_relayout","plotly_brushed","plotly_brushing","plotly_clickannotation","plotly_doubleclick","plotly_deselect","plotly_afterplot","plotly_sunburstclick"],"base_url":"https://plot.ly"},"evals":[],"jsHooks":[]}</script>
+
+---
+
+## Understanding Linear Regression Output
+
+
+```r
+summary(lm(Time ~ Gender, data = dat))
+```
+
+```
+## 
+*## Call:
+## lm(formula = Time ~ Gender, data = dat)
+## 
+*## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -0.15511 -0.09608 -0.06150 -0.01357  0.57850 
+## 
+*## Coefficients:
+##             Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)  2.56622    0.03110  82.505  &lt; 2e-16 ***
+## Genderm     -0.34557    0.04362  -7.922 9.25e-11 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.1675 on 57 degrees of freedom
+*## Multiple R-squared:  0.5241,	Adjusted R-squared:  0.5157 
+## F-statistic: 62.76 on 1 and 57 DF,  p-value: 9.248e-11
+```
+
+---
+
+## Contact
+
+Tong Jin
+
+- Email: tj1061@nyu.edu
+- Office Hours
+  - Mondays, 9 - 10am (EST)
+  - Wednesdays, 12:30 - 1:30pm (EST)
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"ratio": "16:9",
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

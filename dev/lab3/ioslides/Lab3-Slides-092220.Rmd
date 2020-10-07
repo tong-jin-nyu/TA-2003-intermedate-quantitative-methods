@@ -1,0 +1,467 @@
+---
+title: "APSTA-GE 2003: Intermediate Quantitative Methods"
+subtitle: "Lab Section 003, Week 3"
+author: "Tong Jin"
+date: "09/22/2020"
+output: 
+  ioslides_presentation:
+    incremental: false
+    widescreen: true
+    smaller: true
+    logo: _images/logo_nyu.png
+    css: styles.css
+---
+
+```{r setup, include=FALSE}
+# Author: Tong Jin
+# Date created: 09/22/2020
+# Date modified: 10/07/2020
+
+knitr::opts_chunk$set(echo = FALSE)
+
+library(plotly)
+library(openintro)
+library(data.table)
+library(car)
+```
+
+## Reminders
+
+- Assignment 1
+  - Due: **09/23/2020 11:55pm (EST)**
+- Assignment 2 is available now
+  - Due: **10/02/2020 11:55pm (EST)**
+- Office hours
+  - Monday 9 - 10am (EST)
+  - Wednesday 12:30 - 1:30pm (EST)
+- Office hour notes
+  - Available on NYU Classes under the "Resources" tab
+  
+## Fun slide
+
+**"Get ten bagels when you arrive at the bakery. If you see muffins, get one."**
+
+How many bagels will you buy?
+
+- A. 10
+
+- B. 1
+
+## Another fun slide
+
+**"Get ten bagels when you arrive at the bakery. If you see muffins, get one."**
+
+```{r fun-1, echo=TRUE}
+has_Muffin <- TRUE
+shopping_at <- function (location) {
+  if (location == "bakery") {
+    if (has_Muffin == TRUE) {
+      bagel <- 1
+    } else {
+      bagel <- 10
+    }
+  }
+  return(bagel)
+}
+shopping_at(location = "bakery")
+```
+
+## One more fun slide
+
+```{r fun-2, echo=TRUE, results=FALSE}
+has_Muffin <- TRUE
+shopping_at <- function (human = TRUE, location) {
+  if (location == "bakery") {
+    if (human == TRUE) {
+      if (has_Muffin == TRUE) {
+        bagel <- 10
+        muffin <- 1
+      } else {
+        bagel <- 10
+      }
+    } else {
+      if (has_Muffin == TRUE) {
+        bagel <- 1
+      } else {
+        bagel <- 10
+      }
+    }
+  }
+  return(bagel)
+}
+shopping_at(human = TRUE, location = "bakery")  # 10
+shopping_at(human = FALSE, location = "bakery") # 1
+```
+
+## How about another fun slide?
+
+To make things right, try to talk like this: 
+
+When you arrive at the bakery:
+
+- If there are muffins, buy 1 muffin and 10 bagels. Checkout.
+
+- If there is no muffin, buy 10 bagels. Checkout.
+
+## So many fun slides
+
+How we communicate:
+
+  - "Get some bagels. Maybe we should get some muffins. I don't know. If muffins look good, get some. Oh! Don't forget brownies. If you buy all three, get less bagels cause that will be too much. 
+  
+Human: totally fine! don't worry I got it!
+
+Computer: 
+
+  - error: "some" is not defined
+  - logic error: "maybe"
+  - logic error: "I don't know, either."
+  - error: "good" is not defined
+  - error: "less" is not defined
+  - logic warning: "If you buy all three..."
+
+## Today's topics
+
+- Math Review
+  - Ordinary Least Squares Linear Regression
+- Programming in R
+  - Simple regression analysis from scratch 
+  
+# Math Review
+
+## Linear Regression
+
+There are many types of regression analysis.
+
+In this course, we will focus on linear regression. 
+
+$$
+Y_i = \beta_0 + \beta_1 \times X_i + \varepsilon
+$$
+where $\beta_0$ is the intercept, $\beta_1$ is the slope, and $\varepsilon$ is the error.
+
+## We need some data
+
+Let's create 100 data points with two variables: `X` and `Y`, which are highly correlated.
+
+$$
+Y_i = X_i + \varepsilon
+$$
+
+```{r sim_data}
+epsilon <- rnorm(n = 100, mean = 0, sd = 1)
+dat_sim <- data.frame(
+  X <- rnorm(n = 100, mean = 20, sd = 2),
+  Y <- X + epsilon,
+  diff = Y - X
+)
+colnames(dat_sim) <- c("X", "Y", "Diff.")
+head(dat_sim)
+```
+
+## Let's visualize the simulated data set
+
+```{r viz_sim_data, echo=TRUE}
+p <- ggplot(dat_sim, aes(x = X, y = Y)) +
+  geom_point() + 
+  theme_minimal()
+ggplotly(p)
+paste("Correlation Coefficient: ", 
+      round(cor(x = dat_sim$X, y = dat_sim$Y), digits = 3),
+      sep = "")
+```
+
+## We need a model
+
+Let's fit a linear regression model. A linear regression defines a line:
+
+$$
+\hat{Y} = \beta_0 + \beta_1 X_i
+$$
+
+```{r lm_sim_data}
+lm_sim_data <- lm(Y ~ X, data = dat_sim)
+predict_lm_sim <- data.frame(
+  Y_hat <- predict(lm_sim_data, dat_sim),
+  X = dat_sim$X
+)
+p <- p + 
+  geom_line(data = predict_lm_sim, aes(x = X, y = Y_hat, col = "red"))
+ggplotly(p)
+```
+
+## What does this mean?
+
+**Regression line** is the line that minimizes the **squared distances/errors** between $Y_i$ and the line. In this case:
+
+$$
+(\beta_0, \beta_1) 
+= \mathcal{argmin} \sum_{i=1}^{100} (Y_i - \hat {Y_i})^2
+= \mathcal{argmin} \sum_{i=1}^{100} (Y_i - (\beta_0 + \beta_1 X_i))^2
+$$
+
+```{r lm_demo-1, echo=FALSE}
+ggplotly(p)
+```
+
+## We love math!
+
+$$
+\begin{align}
+\mathcal{Q}(\beta_0, \beta_1) & = \sum_{i=1}^{n} (Y_i - \hat {Y_i})^2
+= \sum_{i=1}^{n} (Y_i - (\beta_0 + \beta_1 X_i))^2 \\
+& = \sum_{i=1}^n (Y_i - \beta_0 -\beta_1 X_i)^2 \\
+& = \sum_{i=1}^n Y_{i}^2 + n \beta_0^2 + \beta_1^2 \sum_{i=1}^n X_i^2 
+    - 2 \beta_0 \sum_{i=1}^n Y_i 
+    - 2 \beta_1 \sum_{i=1}^n Y_i X_i 
+    + 2 \beta_0 \beta_1 \sum_{i=1}^n X_i \\
+\end{align}
+$$
+
+## We love math so much!
+
+$$
+\mathcal{Q}(\beta_0, \beta_1) = \sum_{i=1}^n Y_{i}^2 + n \beta_0^2 + \beta_1^2 \sum_{i=1}^n X_i^2 - 2 \beta_0 \sum_{i=1}^n Y_i - 2 \beta_1 \sum_{i=1}^n Y_i X_i + 2 \beta_0 \beta_1 \sum_{i=1}^n X_i
+$$
+
+$$
+\frac{\partial Q}{\partial \beta_0} = 2n\beta_0 - 2n\overline{Y} + 2n\beta_1 \overline{X} 
+$$
+
+$$
+\frac{\partial Q}{\partial \beta_1} = 2\beta_1 \sum_{i=1}^n X_i^2 + 2n\beta_0 \overline{X} - 2n\sum_{i=1}^n Y_i X_i
+$$
+
+where $\overline{Y}$ is the mean of $Y$, and $\overline{X}$ is the mean of $X$.
+
+## We love math! (Yes we do!)
+
+$\frac{\partial \mathcal{Q}}{\partial \beta_0}$ is the change of line equation if its intercept ($\beta_0$) is varied and its slope ($\beta_1$) is kept constant.
+
+$\frac{\partial \mathcal{Q}}{\partial \beta_1}$ is the change of line equation if its slope ($\beta_1$) is varied and its intercept ($\beta_0$) is kept constant.
+
+## Almost there ...
+
+To get the Ordinary **Least** Squares (OLS), we need to make sure there is no freedom of movement. This means, check if the second derivatives are positive.
+
+$$
+\frac{\partial \mathcal{Q}}{\partial \beta_0} = 
+2n \beta_0 - 2n \overline{Y} + 2n \beta_1 \overline{X}
+$$
+
+$$
+\frac{\partial \mathcal{Q}}{\partial \beta_0^2} = 2n
+$$
+
+$$
+\frac{\partial \mathcal{Q}}{\partial \beta_1} = 
+2 \beta_1 \sum_{i=1}^n X_i^2 
++ 2n \beta_0 \overline{X} 
+- 2n \sum_{i=1}^n Y_i X_i
+$$
+
+$$
+\frac{\partial \mathcal{Q}}{\partial \beta_1^2} = 2 \sum_{i=1}^n X_i^2
+$$
+
+$$
+\frac{\partial \mathcal{Q}}{\partial \beta_0 \beta_1} = 
+2 \sum_{i=1}^n X_i = 2n \overline{X}
+$$
+
+## Final math slide I promise
+
+Then, solve $\frac{\partial \mathcal{Q}}{\partial \beta_0}$ and $\frac{\partial \mathcal{Q}}{\partial \beta_1}$. We can get: 
+
+$$
+\frac{\partial Q}{\partial \beta_0} = 2n\beta_0 - 2n\overline{Y} + 2n\beta_1 \overline{X}
+$$
+
+$$
+\frac{\partial Q}{\partial \beta_1} = 2\beta_1 \sum_{i=1}^n X_i^2 + 2n\beta_0 \overline{X} - 2n\sum_{i=1}^n Y_i X_i
+$$
+
+$$
+\beta_0 = \overline{Y} - \beta_1 \overline{X}
+$$
+
+$$
+\beta_1 = \frac{\sum_{i=1}^n (X_i - \overline{X})(Y_i - \overline{Y})}
+               {\sum_{i=1}^n (X_i - \overline{X})^2}
+        = \frac{\sum_{i=1}^n (X_i - \overline{X})(Y_i - \overline{Y})}
+               {n \times Var.(X_i)}
+        = \frac{Corr.(X, Y) \times S.D.(Y)}{S.D.(X)}
+$$
+The higher the correlation, the higher the slope.
+
+## Correlation and slope
+
+```{r corr_slope, message=FALSE}
+dat_sim2 <- data.frame(
+  X <- rnorm(n = 100, mean = 20, sd = 2),
+  Y <- rnorm(n = 100, mean = 20, sd = 2)
+)
+colnames(dat_sim2) <- c("X", "Y")
+p <- ggplot(dat_sim, aes(x = X, y = Y)) +
+  geom_point() + 
+  theme_minimal() + 
+  geom_line(data = predict_lm_sim, aes(x = X, y = Y_hat, col = "red")) + 
+  geom_smooth(data = dat_sim2, method = "lm", se = FALSE)
+ggplotly(p)
+```
+
+
+# Programming in R
+    
+## Getting the data set
+
+[2017 Cherry Blossom Run Data, 2017](https://www.openintro.org/data/index.php?data=run17)
+
+[Download Here](https://www.openintro.org/data/csv/run17.csv)
+
+Available on NYU Classes under the "Resources - Tong's Lab - Lab 3"
+
+## The Data Set {.smaller}
+
+Number of rows: 19,961
+
+Variables
+
+- bib: number on the runner's bib (ID)
+
+- name: initials
+
+- sex: biological sex
+
+- age
+
+- city: home city
+
+- net_sec: time record in seconds (accounting for staggered starting time)
+
+- clock_sec: time record in seconds (based on the clock)
+
+- pace_sec: average time per mile, in seconds
+
+- event: either the "10 Mile" race or the "5K"
+
+## Import the data set to RStudio
+
+```{r import, echo=TRUE}
+# Set working directory
+
+# Load the data set
+### <b>
+dat <- read.csv("../../../data/run17.csv")
+### </b>
+```
+
+## Check dimensions
+
+**Dimensions:** number of rows, number of columns
+
+```{r check-dims}
+# Count number of rows and save as N
+print(N <- nrow(dat))
+# Count number of columns
+# ncol(dat)
+### <b>
+# Check column types
+# str(dat)
+```
+
+## Descriptive Analysis
+
+```{r summary-analysis}
+# summary(dat)
+# For the net_sec column
+# mean(dat$net_sec)
+# var(dat$net_sec)
+# sd(dat$net_sec)
+# sd(dat$net_sec) / sqrt(N)  # Standard error
+```
+
+## Hypotheses
+
+$H_0$: For 10 Mile race, the mean of the net finish time of male runners is the same as female runners.
+
+$H_1$: For 10 Mile race, the mean of the net finish time of male runners is **not** the same as female runners.
+
+## Subset the data set
+
+```{r subset, echo=TRUE}
+dat_10m <- dat[dat$even == "10 Mile", ]
+dat_10m$sex <- ifelse(dat_10m$sex == "M", 1, 0)
+```
+
+## Levene's test
+
+To examine if pooled variance is suitable.
+
+```{r levenes-test, echo=TRUE}
+leveneTest(net_sec ~ factor(sex), data = dat_10m)
+```
+
+## T-test
+
+```{r t-test, echo=TRUE}
+t.test(net_sec ~ sex, data = dat_10m, var.equal = FALSE)
+```
+
+## Linear regression
+
+```{r lm1, echo=TRUE}
+summary(lm(net_sec ~ sex, data = dat_10m))
+```
+
+## Visualize regression results
+
+```{r viz_lm1, echo=TRUE}
+plot(x = dat_10m$sex, y = dat_10m$net_sec, type = "p")
+abline(a = 6113.618, b = -611.789, lwd = 2)
+```
+
+## Let's do another regression analysis
+
+On average, the older, the slower.
+
+```{r lm2, echo=TRUE}
+summary(lm2 <- lm(net_sec ~ age, data = dat_10m))
+```
+
+## Visualize regression results
+
+```{r viz_lm2, echo=TRUE}
+plot(x = dat_10m$age, y = dat_10m$net_sec, type = "p", col = "grey")
+abline(a = 5388.0324, b = 12.9782, lwd = 2)
+```
+
+## De-mean
+
+```{r de-mean, echo=TRUE}
+dat_10m$age0 <- dat_10m$age - mean(dat_10m$age)
+summary(lm3 <- lm(net_sec ~ age0, data = dat_10m))
+```
+
+## Visualize regression results
+
+```{r viz_lm3, echo=TRUE}
+plot(x = dat_10m$age0, y = dat_10m$net_sec, type = "p", col = "grey")
+abline(a = 5868.2292, b = 12.9782, lwd = 2)
+abline(v = 0, lty = "dashed", col = "red")
+```
+
+## Standardize
+
+```{r standardize, echo=TRUE}
+dat_10m$age1 <- dat_10m$age0 / sd(dat_10m$age0)
+summary(lm4 <- lm(net_sec ~ age1, data = dat_10m))
+```
+
+## Visualize regression results
+
+```{r viz_lm4, echo=TRUE}
+plot(x = dat_10m$age1, y = dat_10m$net_sec, type = "p", col = "grey", xlab = "SD")
+abline(a = 5868.229, b = 138.950, lwd = 2)
+abline(v = 0, lty = "dashed", col = "red")
+```

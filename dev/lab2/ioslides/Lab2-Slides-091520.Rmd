@@ -1,0 +1,358 @@
+---
+title: "APSTA-GE 2003: Intermediate Quantitative Methods, Fall 2020"
+subtitle: "Lab Section 003, Week 2"
+author: "Tong Jin"
+date: "`r format(Sys.time(), '%D')`"
+output: 
+  ioslides_presentation:
+    incremental: false
+    widescreen: true
+    transition: "faster"
+    logo: _images/logo_nyu.png
+    css: styles.css
+---
+
+```{r setup, include=FALSE}
+# Author: Tong Jin
+# Date created: 09/15/2020
+# Date modified: 10/07/2020
+
+knitr::opts_chunk$set(echo = FALSE)
+
+# Dependencies
+library(plotly)
+library(openintro)
+```
+
+## Today's Topics {.smaller}
+
+- Statistics Review
+  - Inference of Association
+    - **Correlation/Association**
+  - Causal Inference
+    - Causation
+- Math Review
+  - Summary Statistics
+- Programming in R
+  - Levene's Test
+  - Two Sample T-test
+  - Simple Linear Regression
+  
+<div class="notes">
+Slide: agenda
+- highlight the difference between prediction and inference
+- what is regression analysis?
+- what is causal inference? Why is it so difficult?
+</div>
+
+# Statistics Review
+
+## What is Statistics about?
+
+- Inference
+  - **Correlation Inference**
+  - Causal Inference
+
+**Correlation:** make predictions based on the correlation of variables.
+
+**Causation:** change of one variable leads to the change of another.
+
+**Correlation does not lead to causation!**
+
+## Correlation Inference
+
+- On **Average**
+  - individual level variation = error ($\varepsilon$)
+- Examine if `variable A` is associated with `variable B`
+  - The change of `A` is connected with the change of `B`
+  
+## Hypothesis Testing {.smaller}
+
+- Make an assumption
+  - The higher the salt level, the higher the blood pressure.
+  - Income level is associated with people's height.
+  
+- Make hypotheses on mean difference
+  - Null: no difference
+  - Alternative: different
+  
+- Collect data and calculate summary statistics
+  - Mean, variance, standard deviation
+  - Calculate standard error
+
+- Measure how sample points deviate from (imaginary) popluation mean
+  - Use T-test
+  - Calculate p-value (chance to accept null hypothesis)
+    - if $<0.05$, reject the null (**Significant difference**)
+    - if $\geq 0.05$, fail to reject the null
+    
+## Central Limit Theorem
+
+**For large population size, sample mean follows a normal distribution**
+
+$$
+\overline{x} \sim \mathcal{N} (\mu, \frac{\sigma^2}{N})
+$$
+
+```{r ref-plot-CLT, fig.align="center"}
+val_x <- seq(    # Generate x ticks for a normal curve
+  from = -5,
+  to = 5, 
+  by = 0.01
+)
+val_y <- dnorm(val_x, sd = 1.5)    # Generate y ticks for a normal curve
+
+plot(
+  x = val_x, 
+  y = val_y,
+  type = "l",      # Line type
+  lwd = 3,         # Line width
+  col = "red",     # Color
+  xaxt = "n",      # Remove original x ticks
+  yaxt = "n",      # Remove origianl y ticks
+  xlab = "",       # Remove x-axis label
+  ylab = "",       # Remove y-axis label
+  xlim = c(-5, 5), # Make y-axis to the center
+  bty = "n",       # Remove the border box,
+  main = "Distribution of Sample Means"   # Plot title
+)
+abline(v = 0)      # Add the y-axis
+abline(h = 0)      # Add the x-axis
+text(x = 1.2, y = 0.01, labels = "Mean of Sample Means", cex = 0.7)
+```
+
+## Regression Analysis
+
+- Make prediction based on T-test results
+  - Dependent variable (DV) and independent variable (IV)
+  - Use simple linear regression to predict DV based on IV (on avarage)
+    - $DV = \beta_0 + \beta_1 IV$
+    - $\beta_0$: Intercept
+    - $\beta_1$: Slope
+
+# Math Review
+
+## Median
+
+**The value at the center**
+
+- For odd $n$: 
+
+$$
+X_\frac{n + 1}{2}
+$$
+
+- For even $n$: 
+
+$$
+\frac{X_\frac{n}{2} + X_\frac{n+1}{2}}{2}
+$$
+
+$n$: Sample Size
+
+## Mean
+
+**The average value**
+
+**Population Mean:**
+
+$$
+\mu = \frac{\sum_{i=1}^{N} X_i}{N}
+$$
+
+**Sample Mean:**
+
+$$
+\overline{x} = \frac{\sum_{i=1}^{n} x_i}{n}
+$$
+
+$N$: Population Size, $n$: Sample Size
+
+## Variance
+
+**Expected squared distance from the mean**
+
+**Population Variance:**
+
+$$
+\sigma^2 = \frac{1}{N} \sum_{i=1}^{N} (x_i - \mu)^2
+$$
+
+**Sample Variance:**
+
+$$
+s^2 = \frac{1}{n-1} \sum_{i=1}^{n} (x_i - \overline{x})^2
+$$
+
+$N$: Population Size, $n$: Sample Size
+
+<div class="notes">
+- why squared? why can't use absolute value?
+  - abs: to elimiate the influence of negative distance value
+  - squaer: to amplify the difference
+</div>
+
+## Standard Deviation (SD)
+
+**Expected distance from the mean**
+
+**Population SD:**
+
+$$
+\sigma = \sqrt {\text{Population Variance}}
+$$
+
+**Sample SD:**
+
+$$
+s = \sqrt {\text{Sample Variance}}
+$$
+
+<div class="notes">
+- absolute value of the distance
+</div>
+
+## Standard Error (SE)
+
+**Expected distance of sample means from population mean**
+
+**Error: individual-level variation (noise)** In this case, error is the mean variation of each sample.
+
+$$
+SE = \sqrt{\frac{Var.}{n}}
+$$
+
+$$
+SE \downarrow = \frac{SD \downarrow}{\sqrt{n}} \\
+SE \uparrow = \frac{SD \uparrow}{\sqrt{n}} \\
+$$
+
+$n$: Sample size {.smaller}
+
+## SE Demo
+
+*Demo*
+
+```{r ref-plot1}
+# [Extra] This code chunk generates a demo of p-value (area under the curve).
+# ------- This code chunk is for reference only. Feel free to skip it.
+val_x <- seq(    # Generate x ticks for a normal curve
+  from = -5,
+  to = 5, 
+  by = 0.01
+)
+val_y <- dnorm(val_x, sd = 1.5)    # Generate y ticks for a normal curve
+
+plot(
+  x = val_x, 
+  y = val_y,
+  type = "l",      # Line type
+  lwd = 3,         # Line width
+  col = "red",     # Color
+  xaxt = "n",      # Remove original x ticks
+  yaxt = "n",      # Remove origianl y ticks
+  xlab = "",       # Remove x-axis label
+  ylab = "",       # Remove y-axis label
+  xlim = c(-5, 5), # Make y-axis to the center
+  bty = "n",       # Remove the border box,
+  main = "Distribution of Sample Means"   # Plot title
+)
+abline(v = 0)      # Add the y-axis
+abline(h = 0)      # Add the x-axis
+segments(x0 = 1, y0 = 0,
+         x1 = 1, y1 = val_y[601],
+         lwd = 2, col = "blue2")
+text(1.2, 0.1, "a", cex = 1.1)
+arrows(x0 = 1, y0 = 0.15,
+      x1 = 0, y1 = 0.15,
+      length = 0.1, code = 3)
+```
+
+## Confidence Interval
+
+**Estimated population mean**
+
+with 95% of confidence, we estimate the population mean is within:
+
+$$
+(\overline{x} - 1.96 SE, \ \overline{x} + 1.96 SE)
+$$
+
+<div class="notes">
+for large sample size:
+Female: 5163.7 +- 1.96 * 65.6
+Male: 5406.1 +- 1.96 * 63.9
+</div>
+
+## Pooled Variance
+
+**Weighted average of the variance of two samples by degrees of freedom**
+
+$$
+s^2_{pooled} = \frac{Var_1 + Var_2}{n_1 - 1 + n_2 - 1}
+$$
+
+## Degrees of Freedom (d.f.)
+
+**The level of freedom that you can freely replace values**
+
+$$
+\begin{align*}
+A &= {5, 3, 4, 4} \\
+&df_A = 4 \\
+\\
+\mu_A &= \frac{5 + 3 + 4 + 4}{4} = 4 \\
+&df_{\mu_A} = 3 \\
+\\
+\sigma_A &= \frac{(5-4)^2+(3-4)^2+(4-4)^2+(4-4)^2}{df_{\mu_A}} = \frac{2}{3} 
+\end{align*} 
+$$
+
+# Programming in R
+
+## Levene's Test
+
+```{r levenes-test, eval=FALSE, echo=TRUE}
+install.packages("car") # Companion to Applied Regression
+library(car)
+
+# Demo
+# <b>
+leveneTest(Time ~ factor(Gender), data = marathon)
+# </b>
+```
+
+## Simple Linear Regression
+
+```{r linear-regression, eval=FALSE, echo=TRUE}
+# <b>
+lm1 <- lm(Time ~ Gender, data = marathon)
+# </b>
+summary(lm1)
+```
+
+## Visualizing Linear Regression {.smaller}
+
+```{r viz-lm, echo=TRUE, warning=FALSE, message=FALSE, fig.width=6}
+dat <- marathon
+lm1 <- lm(Time ~ Gender, data = dat)
+dat %>%
+  plot_ly(x = ~Gender) %>%
+  add_markers(y = ~Time) %>%
+  add_lines(x = ~Gender, y = fitted(lm1))
+```
+
+## Understanding Linear Regression Output {.smaller}
+
+```{r lm-explain, echo=TRUE}
+summary(lm(Time ~ Gender, data = dat))
+```
+
+## Contact
+
+Tong Jin
+
+- Email: tj1061@nyu.edu
+- Office Hours
+  - Mondays, 9 - 10am (EST)
+  - Wednesdays, 12:30 - 1:30pm (EST)

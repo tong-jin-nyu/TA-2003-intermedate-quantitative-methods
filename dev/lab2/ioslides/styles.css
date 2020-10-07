@@ -1,0 +1,19 @@
+body {
+    background-color: rgb(224, 224, 224);
+    opacity: 0.8;
+    line-height: 1.15;
+}
+
+a, a > code {
+  color: #3C91E6;
+  text-decoration: none;
+}
+.footnote {
+  position: absolute;
+  bottom: 3em;
+  padding-right: 4em;
+  font-size: 90%;
+}
+code {
+  font-family: Menlo, monospace;
+}

@@ -1,16 +1,54 @@
-### Created on: 09/08/2020
-### Modified on: 09/08/2020
-
-# APSTA-GE 2003: Intermediate Quantitative Methods
-# Fall 2020
-
-# Lab 1 ------------------------------------------------------------------------
-# Class Notes ------------------------------------------------------------------
+# ----- ----- ----- -----
+#
+# Title: APSTA-GE 2003: Intermediate Quantitative Methods, Fall 2020
+# Subtitle: Lab 1 Extras
+# 
+# Data Created: 09/08/20
+# Data Modified: 10/06/20
+#
+# ----- ----- ----- -----
+#
+# Author: Tong Jin
+# Email: tj1061@nyu.edu
+# Affiliation: New York University
+# Copyright (c) Tong Jin, 2020
+#
+# ----- ----- ----- -----
+# 
+# Notes:
+# This is an additional version of Lab 1 Notes. It contains extra code lines and 
+# functions.
+#
+# ----- ----- ----- -----
 
 # Introduction to R ------------------------------------------------------------
 
-## Before coding in RStudio ----------------------------------------------------
+## Coding in RStudio -----------------------------------------------------------
 
+### Using "console" pane -------------------------------------------------------
+
+# To code in console, just type in the code you want R to evaluate and then hit 
+# the "Enter/Return" key.
+
+### Using "source" pane --------------------------------------------------------
+
+# The source pane allows you to write a script. To start, create a script file by 
+# selecting "File - New File - R Script". 
+
+# After creating a blank script file, we can start typing in our codes. 
+# There are two types of line in a script:
+# 1. Code
+# 2. Comment
+# A code line is an executable sentence that can be evaluated by R.
+# A comment begins with a number sign (#). Till now, all lines in this script are 
+# comments.
+
+# Here is an example of code line: 
+print("hello, world")
+# Here is an example of comment:
+# Print "hello, world"
+
+# Other things to keep in mide:
 # 1. To "comment out" a line, add a # (number sign) at the beginning of the line 
 #    or select the line and use "Ctrl/Command + Shift + C".
 
@@ -27,7 +65,7 @@
 #      Keep line length within 80 characters.
 #      Show Margin Line: Tools > Global Options > Code > Display > Show margin
 
-# 5. Personalize: Tools > Global Options > Appearance
+# 5. Personalization: Tools > Global Options > Appearance
 
 ## Getting started -------------------------------------------------------------
 
@@ -35,74 +73,126 @@
 #    Your working directory is the folder you are working in and where new files 
 #    will be created and saved.
 #    a. Use getwd() function to print the current working directory
-# Code Here
+# Set working directory to the root file
 getwd()
+setwd()
 
-#    Use the "Files" tab to set the working directory with graphic UI. 
-#    There is a small button with three dots (...) at the upper right corner of 
-#    the "Files" tab. It's called "Go to directory". After clicking, a file 
-#    selection window will pop out, allowing you to change directory using graphic 
-#    user interface. After locating the new directory, click "More" in the "Files" 
-#    tab, and then select "Set As Working Directory".
+# 2. Create, open, or save an R script -----------------------------------------
+#    a. Create
+#    - File > New File > R Script
+#    - New file icon at top left
+#    - Ctrl/Command + Shift + N
 
-# 2. Load a data set and inspect -----------------------------------------------
+#    b. Open
+#    - File > Open File...
+#    - Ctrl/Command + O
+
+#    c. Save
+#    - File > Save
+#    - Ctrl/Command + S
+
+# 3. Package Management --------------------------------------------------------
+#    (About R packages: https://rstudio.com/products/rpackages/)
+
+#    a. Install a package using the "install.packages()" function
+#    Example: the "openintro" package
+#    You will need internet access to download packages.
+install.packages("openintro") # Make sure the package name is in quotes.
+
+#    b. Load a package using the "library()" function
+library(openintro)
+
+# 4. Load a data set and inspect -----------------------------------------------
 #    a. Loading data using the "read.csv()" function
 #    "read.csv()" imports csv (Comma Separated Values) files to R.
 #    Here, I import the "marathon.csv" file to R and name it "marathon".
-# Code Here
+marathon <- read.csv("data/marathon.csv")
 
-marathon <- read.csv(file = "marathon.csv")
+#    Use "file.choose()" function to manually select the data set you want to 
+#    import. This option is great if you're feeling lazy or desperate, 
+#    but not so great for running R markdown files or anything you want someone
+#    else to be able to run...
+marathon <- read.csv(file.choose())
+
+#    There are also some built in data sets in R
+#    (some are also available via packages).
+
+#    The marathon dataset above can also be accessed via the "openintro" package.
+#    So, once you've run the code above to load the library, you can load the
+#    dataset simply by using the "data()" function.
+data(marathon)
+
+#    To delete an object, use "rm()". 
+#    *BE VERY CAREFUL WITH DELETING THINGS!*
+rm(marathon)
 
 #    b. Inspect data
 #    For small data sets, you can use the "View()" function to pull the entire 
 #    data table. This command is the same as clicking on the data name in the 
 #    "Environment" tab.
-
+View(marathon)
 
 #    For large data sets, use the "str()" function to get an overview.
-# Code Here
-# Structure
-str(dat)
+str(marathon)
+
+#    Check the data type using the "class()" function. This is generally not
+#    necessary to check every time you import a data set. 
+#    It's just for future reference
+class(marathon)
 
 #    Inspect the first and last rows of the data set.
-# Code Here
-head(dat, n = 10)
-tail(dat, n = 5)
+head(marathon)         # by default, shows first 6 rows
+tail(marathon)         # by default, shows last 6 rows
+head(marathon, n = 10) # change how many rows to show
+tail(marathon, n = 2)  # shows last 2 rows
 
-# 3. Summary Statistics --------------------------------------------------------
-#    Generate descriptive summary on the "Time" column.
-#    a. Number of runners
-# Code Here
-N <- nrow(dat)
 
-#    b. Mean (Average)
-# Code Here
-mean(dat$Time)
+# 5. Inspect variables ---------------------------------------------------------
+#    a. Referencing a column
+#    Use $ (dollar sign) to reference a specific column.
+marathon$Year # prints all values in the "Year" column
 
-#    c. Variance
-# Code Here
-var(dat$Time)
+#    b. Use [] (square brackets) to slice an object (data frame, vector, ...)
+marathon[, 2]   # prints all values in the second column ("Year")
+marathon[1:6, ] # prints the first 6 rows
+marathon[10, 3] # prints the gender of the 10th player
 
-#    d. Standard Deviation
-# Code Here
-sd(dat$Time)
+#    c. Using the "table()" function to count unique values
+table(marathon$Gender) # counts the gender of players
 
-#    e. Standard Error (SE)
-# Code Here
-sqrt( var(dat$Time) / N )
+#    d. Using the "range()" function to get the lowest and the highest values
+range(marathon$Time)   # prints the shortest and longest finish times 
 
-#    f. Median
-# Code Here
-median(dat$Time)
+#    e. Quick summary stats of variables
+summary(marathon$Time)
+summary(marathon$Time, digits = 2) # round to 2 digits
 
-# Summary table
-summary(dat)
+# 6. Calculate individual stats ------------------------------------------------
+#    a. Mean (Average)
+mean(marathon$Time)
 
-# 4. A trick to avoid referencing "marathon$" every time: ----------------------
+#    b. Variance
+var(marathon$Time)
+
+#    c. Standard Deviation
+sd(marathon$Time)
+
+#    d. Square Root
+sqrt(var(marathon$Time)) # Note: sd = sqrt(var)
+
+#    e. Median
+median(marathon$Time)
+
+#    f. Correlation and Co-variance
+cor(marathon$Year, marathon$Time) 
+cov(marathon$Year, marathon$Time)
+
+# Question: How could you interpret the negative correlation/co-variance between year and marathon time?
+
+# 7. A trick to avoid referencing "marathon$" every time: ----------------------
 #    *Define variables*
 time <- marathon$Time                     # define time as the "Time column
 male <- marathon[marathon$Gender == "m", ]  # define male as male records
-marathon$Time[marathon$Gender == "m"]
 
 # Setting up for a T-test (or Simple Regression) -------------------------------
 
@@ -125,13 +215,9 @@ levels(marathon$Gender)
 #    (this is not necessary in order to run the model, but will be helpful for 
 #    plotting):
 marathon$Gender <- ifelse(marathon$Gender == "f", yes = 0, no = 1)
-# ifelse(
-#   test = marathon$Gender == "f",
-#   yes = 0, # female
-#   no = 1   # male
-# )
 
 # 2. Re-inspect the gender variable to confirm it is now numeric with 0s and 1s.
+class(marathon$Gender)
 table(marathon$Gender)
 
 # 3. Subset the data into two vectors: marathon times for females and marathon 
@@ -139,9 +225,39 @@ table(marathon$Gender)
 female_times <- marathon$Time[marathon$Gender == 0]
 male_times <- marathon$Time[marathon$Gender == 1]
 
+# 4. Calculate N (count), mean, variance, and standard error (SE) for each group.
+
+#    N
+female_N <- length(female_times) 
+male_N <- length(male_times)
+
+female_N
+male_N
+
+#    Mean
+female_mean <- mean(female_times) 
+male_mean <- mean(male_times)
+
+female_mean
+male_mean
+
+#    Variance
+female_variance <- var(female_times) 
+male_variance <- var(male_times)
+
+female_variance
+male_variance
+
+#    Standard Error
+female_SE <- sqrt(female_variance/female_N)
+male_SE <- sqrt(male_variance/male_N)
+
+female_SE
+male_SE
+
 # Levene's test ------------------------------------------------------------------
-# Next, we run a Levene's test to examine if female and male groups have the same 
-# variance.
+# Next, we run a Levene's test to examine if female and male groups have same 
+# variance
 
 # 1. Load the "car" package
 install.packages("car")
@@ -151,7 +267,6 @@ library(car)
 #    Null hypothesis: H0: equal variance 
 #    Alternative hypothesis: HA: non-equal variance
 leveneTest(Time ~ factor(Gender), data = marathon)
-
 #    Note: need to use "factor()" to coerce Gender back to a factor variable for
 #    purposes of this test.
 
@@ -182,15 +297,19 @@ t.test(Time ~ Gender, data = marathon, var.equal = FALSE)
 # data set with the argument "data = marathon".
 lin_model <- lm(Time ~ Gender, data = marathon) # Assign the model to lin_model
 
+# We can verify that this object is a list using is.list().
+is.list(lin_model)
+
+# We can see all the first level items in the list using ls()
+ls(lin_model)
+
 # Check coefficients
 lin_model$coefficients
-
 # Using just "coef" as done in the lecture notes is simply a shortcut for typing
 # out the whole word.
 
 # Get an overview of the model
 summary(lin_model)
-
 # You'll be using summary() on models more as you progress and need to evaluate
 # how well your model fits the data or when you might decide to go with one model
 # over another.
@@ -223,4 +342,4 @@ abline(lin_model, col = "red")
 points(0, female_mean, col = "blue", pch = 19)
 points(1, male_mean, col = "blue", pch = 19)
 
-# END of Lab 1 -----------------------------------------------------------------
+# END of Lab 1 Extra -----------------------------------------------------------

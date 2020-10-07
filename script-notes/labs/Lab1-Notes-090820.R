@@ -14,8 +14,12 @@
 # Copyright (c) Tong Jin, 2020
 #
 # ----- ----- ----- -----
-
-# Introduction to R ------------------------------------------------------------
+# 
+# Topics: 
+# 
+# Introduction to R 
+# 
+# ----- ----- ----- -----
 
 ## Coding in RStudio -----------------------------------------------------------
 
@@ -67,7 +71,7 @@ print("hello, world")
 #    Your working directory is the folder you are working in and where new files 
 #    will be created and saved.
 #    a. Use getwd() function to print the current working directory
-# Set working directory to the root file
+# Set working directory
 getwd()
 setwd()
 
@@ -88,7 +92,7 @@ read.csv("marathon.csv")
 #    We can also assign a name to the above command so that we can refer the data
 #    set later by using the name instead of the whole sentence.
 # Import the data set and define it as "dat"
-dat <- read.csv("data/marathon.csv")
+dat <- read.csv("marathon.csv")
 
 #    b. Inspect data -----------------------------------------------------------
 #    For small data sets, you can use the "View()" function to pull the entire 

@@ -73,7 +73,7 @@ print("hello, world")
 #    Your working directory is the folder you are working in and where new files 
 #    will be created and saved.
 #    a. Use getwd() function to print the current working directory
-# Set working directory to the root file
+# Set working directory
 getwd()
 setwd()
 
@@ -106,7 +106,7 @@ library(openintro)
 #    a. Loading data using the "read.csv()" function
 #    "read.csv()" imports csv (Comma Separated Values) files to R.
 #    Here, I import the "marathon.csv" file to R and name it "marathon".
-marathon <- read.csv("data/marathon.csv")
+marathon <- read.csv("marathon.csv")
 
 #    Use "file.choose()" function to manually select the data set you want to 
 #    import. This option is great if you're feeling lazy or desperate, 

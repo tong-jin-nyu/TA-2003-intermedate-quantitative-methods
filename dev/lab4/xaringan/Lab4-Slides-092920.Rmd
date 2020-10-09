@@ -1,0 +1,315 @@
+---
+title: "APSTA-GE 2003: Intermediate Quantitative Methods"
+subtitle: "Lab Section 003, Week 4"
+institute: "New York University"
+date: "09/29/2020"
+output:
+  xaringan::moon_reader:
+    css: ["styles.css", "styles-font.css"]
+    self_contained: TRUE
+    seal: TRUE
+    lib_dir: libs
+    nature:
+      ratio: '16:9'
+      highlightStyle: github
+      highlightLines: TRUE
+      countIncrementalSlides: FALSE
+---
+
+```{r setup, include=FALSE}
+# Author: Tong Jin
+# Date created: 09/29/2020
+# Date modified: 10/08/2020
+
+knitr::opts_chunk$set(
+  echo = TRUE, 
+  message=FALSE, 
+  warning=FALSE, 
+  fig.height = 6,
+  fig.width = 8
+)
+
+library(plotly)
+library(openintro)
+library(data.table)
+```
+
+## Reminders
+
+- Assignment 2
+  - Due: **10/02/2020 11:55pm (EST)**
+- Office hours
+  - Monday 9 - 10am (EST)
+  - Wednesday 12:30 - 1:30pm (EST)
+- Office hour Zoom link
+  - https://nyu.zoom.us/j/97347070628 (pin: 2003)
+- Office hour notes
+  - Available on NYU Classes under the "Resources" tab
+  
+---
+  
+## Fun slide
+
+- **"What do you call a regression model with only two data points?"**
+
+- A line.
+
+---
+
+## Let's build the fun part
+
+**Let's create a simulated data set with only two data points.**
+
+```{r fun-1}
+first_point  <- c(25, 10)
+second_point <-  c(5, 30)
+dat_for_fun <- data.frame(
+  X = c(first_point[1], second_point[1]),
+  Y = c(first_point[2], second_point[2])
+)
+dat_for_fun
+```
+
+---
+
+## Here comes the fun part
+
+**Let's fit a regression model and talk about the perfect R-squared and those NAs for half an hour.**
+
+```{r fun-2}
+# Let's fit a linear regression model
+lm_for_fun <- lm(formula = Y ~ X, data = dat_for_fun)
+summary(lm_for_fun)
+```
+
+---
+
+## More fun? Yes!
+
+**To make things even better, let's plot the results!**
+
+```{r fun-3, echo=FALSE}
+ggplotly(
+  ggplot(data = dat_for_fun, aes(x = X, y = Y)) +
+    geom_point() + 
+    geom_smooth(method = lm, se = FALSE) +
+    theme_minimal() + xlim(0, 30) + ylim(0, 35) + 
+    geom_text(aes(label = paste("Point ", rownames(dat_for_fun), sep = "")), check_overlap = TRUE, nudge_y = 2.5, size = 3)
+)
+```
+
+---
+
+## How about this?
+
+**How about four data points?**
+
+```{r fun-4, echo=FALSE}
+third_point <- c(30, 20)
+fourth_point <- c(10, 15)
+dat2_for_fun <- rbind(dat_for_fun, third_point)
+dat2_for_fun <- rbind(dat2_for_fun, fourth_point)
+avg_X <- mean(dat2_for_fun$X)
+avg_Y <- mean(dat2_for_fun$Y)
+p_for_fun <- ggplot(data = dat2_for_fun, aes(x = X, y = Y)) +
+  geom_point()
+ggplotly(
+  p_for_fun +
+    geom_smooth(method = lm, se = FALSE) + 
+    geom_vline(xintercept = avg_X, color = "red", size = .2) + 
+    geom_hline(yintercept = avg_Y, color = "red", size = .2) +
+    theme_minimal() + xlim(0, 30) + ylim(0, 35) + 
+    geom_text(aes(label = paste("Point ", rownames(dat2_for_fun), sep = "")), check_overlap = TRUE, nudge_y = 2.5, size = 3)
+)
+```
+
+---
+
+## Let's check the result
+
+*(25, 10), (10, 15), (5, 30), (30, 20)*
+
+```{r fun-5}
+lm2_for_fun <- lm(formula = Y ~ X, data = dat2_for_fun)
+summary(lm2_for_fun)
+```
+
+---
+
+## Seamlessly switching to today's topics
+
+**Distance to the mean**: the distance between each data point and the average DV value.
+
+```{r fun-6, echo=FALSE}
+ggplotly(
+  p_for_fun +
+    geom_smooth(method = lm, se = FALSE) + 
+    geom_hline(yintercept = avg_Y, color = "red", size = .2) +
+    theme_minimal() + xlim(0, 30) + ylim(0, 35) + 
+    geom_text(aes(label = paste("Point ", rownames(dat2_for_fun), sep = "")), check_overlap = TRUE, nudge_x = -2.5, size = 3) + 
+    geom_segment(aes(x = 5, y = 30, xend = 5, yend = avg_Y, color = "green"), linetype = "dotted", size = 0.3) + 
+    geom_segment(aes(x = 10, y = 15, xend = 10, yend = avg_Y, color = "green"), linetype = "dotted", size = 0.3) +
+    geom_segment(aes(x = 25, y = 10, xend = 25, yend = avg_Y, color = "green"), linetype = "dotted", size = 0.3) +
+    geom_segment(aes(x = 30, y = 20, xend = 30, yend = avg_Y, color = "green"), linetype = "dotted", size = 0.3) 
+)
+```
+
+---
+
+## Sum of Squares (SS)
+
+What is **Sum of Squares**?
+
+The sum of squared distance. 
+
+$$\sum_{i=1}^n \ \ \ (Y_i - \overline{Y}) \ \ \ ^2$$
+
+---
+
+## Three types of SS
+
+**Total Sum of Squares (TSS)**: Sum of squared distance between observed data and the mean
+
+$$TSS = \sum_{i=1}^n (Y_i - \overline{Y})^2$$
+
+**Model (Explained) Sum of Squares (MSS)**: Sum of squared distance included in the model
+
+$$MSS = \sum_{i=1}^n (\hat{Y_i} - \overline{Y_i})^2$$
+
+**Residual Sum of Squares (RSS)**: Sum of squared distance not included in the model
+
+$$RSS = \sum_{i=1}^n e_{i}^2 = \sum_{i=1}^n (Y_i - \hat{Y_i})^2$$
+
+---
+
+## Total Sum of Squares (TSS)
+
+$$TSS = \sum_{i=1}^n (Y_i - \overline{Y})^2$$
+
+```{r TSS, echo=FALSE}
+ggplotly(
+  p_for_fun +
+    geom_smooth(method = lm, se = FALSE) + 
+    geom_hline(yintercept = avg_Y, color = "red", size = .2) +
+    theme_minimal() + xlim(0, 30) + ylim(0, 35) + 
+    geom_text(aes(label = paste("Point ", rownames(dat2_for_fun), sep = "")), check_overlap = TRUE, nudge_x = -2.5, size = 3) + 
+    geom_segment(aes(x = 5, y = 30, xend = 5, yend = avg_Y, color = "green"), linetype = "dotted", size = 0.3) + 
+    geom_segment(aes(x = 10, y = 15, xend = 10, yend = avg_Y, color = "green"), linetype = "dotted", size = 0.3) +
+    geom_segment(aes(x = 25, y = 10, xend = 25, yend = avg_Y, color = "green"), linetype = "dotted", size = 0.3) +
+    geom_segment(aes(x = 30, y = 20, xend = 30, yend = avg_Y, color = "green"), linetype = "dotted", size = 0.3) 
+)
+```
+
+---
+
+## Total Sum of Squares (TSS) cont.
+
+$$\begin{align}
+TSS_{fun} & = \sum_{i=1}^4 (Y_i - \overline{Y})^2 \\
+          & = (10 - 18.75)^2 + (15 - 18.75)^2 + (30 - 18.75)^2 + (20 - 18.75)^2 \\
+          & = 218.75
+\end{align}$$
+
+---
+
+## Model Sum of Squares (MSS)
+
+$$MSS = \sum_{i=1}^n (\hat{Y_i} - \overline{Y_i})^2$$
+
+```{r MSS, echo=FALSE}
+# Predict Y_hat
+Y_hat <- predict(lm2_for_fun, new = dat2_for_fun)
+ggplotly(
+  p_for_fun +
+    geom_smooth(method = lm, se = FALSE) + 
+    geom_hline(yintercept = avg_Y, color = "red", size = .2) +
+    theme_minimal() + xlim(0, 30) + ylim(0, 35) + 
+    geom_text(aes(label = paste("Point ", rownames(dat2_for_fun), sep = "")), check_overlap = TRUE, nudge_x = -2.5, size = 3) + 
+    geom_segment(aes(x = 5, y = avg_Y, xend = 5, yend = Y_hat[2], color = "green"), linetype = "dotted", size = 0.3) + 
+    geom_segment(aes(x = 10, y = avg_Y, xend = 10, yend = Y_hat[4], color = "green"), linetype = "dotted", size = 0.3) +
+    geom_segment(aes(x = 25, y = avg_Y, xend = 25, yend = Y_hat[1], color = "green"), linetype = "dotted", size = 0.3) +
+    geom_segment(aes(x = 30, y = avg_Y, xend = 30, yend = Y_hat[3], color = "green"), linetype = "dotted", size = 0.3) 
+)
+```
+
+---
+
+## Model Sum of Squares (MSS) cont.
+
+$$\begin{align}
+MSS_{fun} & = \sum_{i=1}^4 (\hat{Y_i} - \overline{Y_i})^2 \\
+          & = (15.88235 - 18.75)^2 + (23.52941 - 18.75)^2 + (13.97059 - 18.75)^2 + (21.61765 - 18.75)^2 \\
+          & = 62.1323529412
+\end{align}$$
+
+---
+
+## Residual Sum of Squares (RSS)
+
+$$RSS = \sum_{i=1}^n e_{i}^2 = \sum_{i=1}^n (Y_i - \hat{Y_i})^2$$
+
+```{r RSS, echo=FALSE}
+ggplotly(
+  p_for_fun +
+    geom_smooth(method = lm, se = FALSE) + 
+    geom_hline(yintercept = avg_Y, color = "red", size = .2) +
+    theme_minimal() + xlim(0, 30) + ylim(0, 35) + 
+    geom_text(aes(label = paste("Point ", rownames(dat2_for_fun), sep = "")), check_overlap = TRUE, nudge_x = -2.5, size = 3) + 
+    geom_segment(aes(x = 5, y = 30, xend = 5, yend = Y_hat[2], color = "green"), linetype = "dotted", size = 0.3) + 
+    geom_segment(aes(x = 10, y = 15, xend = 10, yend = Y_hat[4], color = "green"), linetype = "dotted", size = 0.3) +
+    geom_segment(aes(x = 25, y = 10, xend = 25, yend = Y_hat[1], color = "green"), linetype = "dotted", size = 0.3) +
+    geom_segment(aes(x = 30, y = 20, xend = 30, yend = Y_hat[3], color = "green"), linetype = "dotted", size = 0.3) 
+)
+```
+
+---
+
+## Residual Sum of Squares (RSS) cont.
+
+$$\begin{align}
+RSS_{fun} & = \sum_{i=1}^4 (Y_i - \hat{Y_i})^2 \\
+          & = (10 - 15.88235)^2 + (30 - 23.52941)^2 + (20 - 13.97059)^2 + (15 - 21.617656)^2 \\
+          & = 156.617732353
+\end{align}$$
+
+---
+
+## TSS, MSS, and RSS
+
+In our case:
+
+$$TSS_{fun} = 218.75 \\
+MSS_{fun} = 62.1323529412 \\
+RSS_{fun} = 156.617732353$$
+
+$$TSS_{fun} = 218.75\\
+MSS_{fun} + RSS_{fun} = 62.1323529412 + 156.617732353 = 218.750085294 \\ 
+TSS_{fun} = MSS_{fun} + RSS_{fun}$$
+
+---
+
+## Analysis of Variance 
+
+```{r ANOVA}
+anova(lm2_for_fun)
+```
+
+$$F_{fun} = \frac{MSS_{fun}/(p-1)}{RSS_{fun}/(n-p)} = \frac{62.132}{156.618/(4 - 2)} = 0.793$$
+
+where $p$ is the degrees of freedom.
+
+---
+
+## R Squared
+
+$R^2$ is the percentage of variability in the data set explained by the model.
+
+$$R^2 = \frac{MSS}{TSS} = 1 - \frac{RSS}{TSS}$$
+
+In our case:
+
+$$\begin{align}
+R_{fun}^2 & = \frac{MSS_{fun}}{TSS_{fun}} = 1 - \frac{RSS_{fun}}{TSS_{fun}} \\
+          & = \frac{62.132}{218.75} = 1 - \frac{156.618}{218.75} \\
+          & = 0.284
+\end{align}$$

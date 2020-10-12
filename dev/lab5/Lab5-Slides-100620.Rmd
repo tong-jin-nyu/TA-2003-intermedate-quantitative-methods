@@ -1,0 +1,402 @@
+---
+title: "APSTA-GE 2003: Intermediate Quantitative Methods"
+subtitle: "Lab Section 003, Week 5"
+institute: "New York University"
+date: "10/06/2020"
+output:
+  xaringan::moon_reader:
+    css: ["styles.css", "styles-font.css"]
+    self_contained: TRUE
+    seal: TRUE
+    lib_dir: libs
+    nature:
+      ratio: '16:9'
+      highlightStyle: github
+      highlightLines: TRUE
+      countIncrementalSlides: FALSE
+---
+
+```{r setup, include=FALSE}
+# Author: Tong Jin
+# Date created: 10/06/2020
+# Date modified: 10/08/2020
+
+knitr::opts_chunk$set(
+  echo = TRUE, 
+  message=FALSE, 
+  warning=FALSE, 
+  fig.height = 6,
+  fig.width = 8
+)
+
+# Dependencies
+library(plotly)
+library(openintro)
+library(data.table)
+```
+
+## Reminders
+
+- Assignment 3
+  - Due: **10/19/2020 11:55pm (EST)**
+- Office hours
+  - Monday 9 - 10am (EST)
+  - Wednesday 12:30 - 1:30pm (EST)
+- Office hour Zoom link
+  - https://nyu.zoom.us/j/97347070628 (pin: 2003)
+- Office hour notes
+  - Available on NYU Classes under the "Resources" tab
+
+---
+
+## Today's Topics
+
+- Quick Review
+  - Math
+  - R Code
+
+- Review class exercise
+  - Using a different dataset
+
+---
+class: inverse, center, middle
+
+# Quick Review
+
+## Summary Statistics
+
+---
+
+## Median
+
+**The value at the center**
+
+- For odd $n$: 
+
+$$X_\frac{n + 1}{2}$$
+
+- For even $n$: 
+
+$$\frac{X_\frac{n}{2} + X_\frac{n+1}{2}}{2}$$
+
+$n$: Sample Size
+
+```{r median}
+# Simulated data
+dat <- data.frame(x = c(rep(1:3, each = 2), rep(2:8, each = 2)))
+median(dat$x) #<<
+```
+
+---
+
+## Mean
+
+**The average value**
+
+**Population Mean:**
+
+$$
+\mu = \frac{\sum_{i=1}^{N} X_i}{N}
+$$
+
+**Sample Mean:**
+
+$$
+\overline{x} = \frac{\sum_{i=1}^{n} x_i}{n}
+$$
+
+$N$: Population Size, $n$: Sample Size
+
+```{r mean}
+mean(dat$x) #<<
+```
+
+---
+
+## Variance
+
+**Expected squared distance from the mean**
+
+**Population Variance:**
+
+$$
+\sigma^2 = \frac{1}{N} \sum_{i=1}^{N} (x_i - \mu)^2
+$$
+
+**Sample Variance:**
+
+$$
+s^2 = \frac{1}{n-1} \sum_{i=1}^{n} (x_i - \overline{x})^2
+$$
+
+$N$: Population Size, $n$: Sample Size
+
+```{r var}
+var(dat$x) #<<
+```
+
+---
+
+## Standard Deviation (S.D.)
+
+**Expected distance from the mean**
+
+**Population SD:**
+
+$$
+\sigma = \sqrt {\text{Population Variance}}
+$$
+
+**Sample SD:**
+
+$$
+s = \sqrt {\text{Sample Variance}}
+$$
+
+```{r stan-deviation}
+sd(dat$x) #<<
+```
+
+---
+
+## Standard Error (S.E.)
+
+**Expected distance of sample means from population mean**
+
+**Error: individual-level variation (noise)** In this case, error is the mean variation of each sample.
+
+$$
+SE = \sqrt{\frac{Var.}{n}}
+$$
+
+$$
+SE \downarrow = \frac{SD \downarrow}{\sqrt{n}} \\
+SE \uparrow = \frac{SD \uparrow}{\sqrt{n}} \\
+$$
+
+$n$: Sample size {.smaller}
+
+```{r stan-error}
+sqrt(var(dat$x)/nrow(dat))
+sd(dat$x)/sqrt(nrow(dat))
+```
+
+---
+
+## Confidence Interval
+
+**Estimated population mean**
+
+with 95% of confidence, we estimate the population mean is within:
+
+$$
+(\overline{x} - 1.96 SE, \ \overline{x} + 1.96 SE)
+$$
+
+## Prediction vs. Confidence
+
+Prediction: individual-level estimation
+
+Confidence: average-level estimation
+
+---
+
+## Pooled Variance
+
+**Weighted average of the variance of two samples by degrees of freedom**
+
+$$
+s^2_{pooled} = \frac{Var_1 + Var_2}{n_1 - 1 + n_2 - 1}
+$$
+
+## Degrees of Freedom (d.f.)
+
+**The level of freedom that you can freely replace values**
+
+---
+
+## T-test and ANOVA
+
+T-test: examine mean difference between two samples or between sample and its population.
+
+ANOVA: examine the variance of two datasets
+
+---
+
+## Linear Regression
+
+$$
+Y_i = \beta_0 + \beta_1 \times X_i + \varepsilon
+$$
+
+where $\beta_0$ is the intercept, $\beta_1$ is the slope, and $\varepsilon$ is the error.
+
+$$
+\hat{Y} = \beta_0 + \beta_1 X_i
+$$
+
+**Regression line** is the line that minimizes the **squared distances/errors** between $Y_i$ and the line. In this case:
+
+---
+
+## Interpreting Linear Regression Model
+
+```{r lm-demo}
+lm_demo <- lm(mpgCity ~ weight, data = cars)
+summary(lm_demo)
+```
+
+---
+
+## TSS, MSS, and RSS
+
+```{r anova-demo}
+anova(lm_demo)
+```
+
+
+---
+class: inverse, middle, center
+
+# Review class exercise
+
+---
+
+**Question 0**
+
+Load the dataset, `cars`, and add a new column labelling the row ID
+
+```{r Q0}
+dat <- cars #<<
+nrow(dat)
+ncol(dat)
+
+# Add a new column labelling the row ID
+
+```
+
+---
+
+**Question 1**
+
+Research question: **how does car's fuel economy change as weight increases?**
+
+Get a sense of these two columns by drawing a scatter plot and report sample size.
+
+```{r Q1}
+dat <- cars #<<
+View(dat)
+
+# Create a scatter plot showing the distribution of mpgCity and weight
+# Hint: plot()
+
+# Report sample size
+```
+
+---
+
+**Question 2**
+
+Research question: **how does car's fuel economy change as weight increases?**
+
+Conduct a simple linear regression.
+
+```{r Q2}
+# Linear model
+```
+
+---
+
+**Question 3**
+
+What's the regression coefficient of `weight` on `mpgCity`? Report the appropriate regression coefficient and standard errors.
+
+```{r Q3}
+# Linear model
+```
+
+---
+
+**Question 4**
+
+What are the null and alternative hypotheses tested here? 
+
+---
+
+**Question 5**
+
+Is this coefficient statistically significant? What test do you use? Write down the null and alternative hypotheses, report test statistic and p value.
+
+---
+
+**Question 6**
+
+Report a 95% confidence interval for the regression coefficient of `weight` on `mpgCity` based on the results from this model.
+
+---
+
+**Question 7**
+
+Based on the model, calculate the fitted values and residuals for all observations in the model.
+
+---
+
+**Question 8**
+
+What are the mean values of the fitted values and residuals?
+
+---
+
+**Question 9**
+
+Calculate or report the total sum of squares, model sum of squares and residual sum of squares. Verify that: $TSS=MSS+RSS$.
+
+---
+
+**Question 10**
+
+What’s the R-square of this model?
+
+---
+
+**Question 11**
+
+What’s the correlation between `mpgCity` and `weight`? Verify the R-square is the correlation squared.
+
+---
+
+**Question 12**
+
+Estimate standardized regression coefficients in two different approaches:
+
+a.	Generate a new variable for `mpgCity` by dividing the original value by its standard deviation; generate a new variable for `weight` by dividing its original value by its standard deviation. Run a regression using these two new variables, report the regression coefficients (intercept and slope)
+
+b.	Use “lm.beta” to estimate the standardized regression coefficients. 
+
+c.	Compare standardized slope with correlation.
+
+d.	What is the meaning of the intercept now?
+
+---
+
+**Question 5**
+
+What are the null and alternative hypotheses tested here? 
+
+---
+
+**Question 5**
+
+What are the null and alternative hypotheses tested here? 
+
+---
+
+## Contact
+
+Tong Jin
+
+- Email: tj1061@nyu.edu
+- Office Hours
+  - Mondays, 9 - 10am (EST)
+  - Wednesdays, 12:30 - 1:30pm (EST)
+

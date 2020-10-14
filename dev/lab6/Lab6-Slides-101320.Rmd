@@ -1,0 +1,438 @@
+---
+title: "APSTA-GE 2003: Intermediate Quantitative Methods"
+subtitle: "Lab Section 003, Week 6"
+institute: "New York University"
+date: "10/13/2020"
+output:
+  xaringan::moon_reader:
+    css: ["styles.css", "styles-font.css"]
+    self_contained: TRUE
+    seal: TRUE
+    lib_dir: libs
+    nature:
+      ratio: '16:10'
+      highlightStyle: github
+      highlightLines: TRUE
+      countIncrementalSlides: FALSE
+---
+
+```{r setup, include=FALSE}
+# Author: Tong Jin
+# Date created: 10/13/2020
+# Date modified: 10/13/2020
+
+knitr::opts_chunk$set(
+  echo = TRUE, 
+  message=FALSE, 
+  warning=FALSE, 
+  fig.height = 6,
+  fig.width = 10
+)
+
+# Dependencies
+library(plotly)
+library(openintro)
+library(data.table)
+
+set.seed(1111)
+```
+
+## Reminders
+
+- **Group Assignment**
+
+  - Due: **10/14/2020 11:59pm (EST)**
+  
+- **Assignment 3**
+
+  - Due: **10/19/2020 11:55pm (EST)**
+  
+- Office hours
+
+  - Monday 9 - 10am (EST)
+  - Wednesday 12:30 - 1:30pm (EST)
+  - By Appointments
+  
+- Office hour Zoom link
+  - https://nyu.zoom.us/j/97347070628 (pin: 2003)
+  
+- Office hour notes
+  - Available on NYU Classes
+- Updates on Lab Slides
+  - Available on NYU Classes
+
+---
+
+## Today's Topics
+
+- Review Diagnostic Regression Analysis
+
+  - How to check **linearity**?
+  
+      - Residual vs. Fitted Values
+    
+  - How to check the **normality** of residuals?
+  
+      - QQ-plot
+      
+  - How to check **equal variance**?
+  
+      - Residual vs. Fitted Values
+      
+  - How to find outliers?
+  
+      - Outliers
+      
+      - Leverage Points
+      
+      - Influential Points
+    
+- Regression Diagnosis
+
+    - Using a new dataset: `marketing`
+
+---
+class: inverse, center, middle
+
+# Diagnostic Regression Analysis
+
+---
+
+## Linear Regression
+
+### **Linear + Regression**
+
+### An approach to:
+
+1. Make prediction by fitting a regression model.
+
+2. Explain how much variance of the dependent variable can be explained by independent variable(s).
+
+**Simple linear regression:** with only one independent variable
+
+**Multiple linear regression:** contains two or more independent variables
+
+---
+
+## Model Types
+
+- **Linear equation**: $Y_i = \beta_1 + \beta_2 \times X_i$
+- **Log equation:** $Y_i = \beta_1 + \beta_2 \times log(X_i)$
+- **Quadratic equation:** $Y_i = \beta_1 + \beta_2 \times X_i^2$
+- **Cubic equation:** $Y_i = \beta_1 + \beta_2 \times X_i^3$
+
+```{r linear-model, echo=FALSE}
+# Generate four simulated data
+n <- 50
+X <- rnorm(n, mean = 3, sd = 1)
+dat_linear <- data.frame(X, Y = 20 + 3 * X + rnorm(n,0,1))       # Linear model
+dat_log    <- data.frame(X, Y = 20 + 3 * log(X) + rnorm(n,0,1))  # Log model
+dat_quad   <- data.frame(X, Y = 20 + 3 * X^2 + rnorm(n,0,1))     # Quadratic model
+dat_cubic  <- data.frame(X, Y = 20 + 3 * X^3 + rnorm(n,0,1))     # Cubic model
+
+# Visualize different data distributions
+p_linear <- ggplotly(
+  ggplot(dat_linear, aes(X, Y)) + 
+    geom_point(col = "red") + 
+    theme_minimal()
+)
+p_log <- ggplotly(
+  ggplot(dat_log, aes(X, Y)) + 
+    geom_point(col = "green") + 
+    theme_minimal()
+)
+p_quad <- ggplotly(
+  ggplot(dat_quad, aes(X, Y)) + 
+    geom_point(col = "darkgray") + 
+    theme_minimal()
+)
+p_cubic <- ggplotly(
+  ggplot(dat_cubic, aes(X, Y)) + 
+    geom_point(col = "blue") +
+    ggtitle("Which is Which?") + 
+    theme_minimal()
+)
+# Plot graphs on a 2-by-2 grid
+subplot(p_linear, p_log, p_quad, p_cubic, 
+        nrows = 2, 
+        shareX = TRUE)
+```
+
+---
+
+## Model Types Visualization
+
+- <span style="color: red;">Linear model</span>: $Y_i = 20 + 3 \times X_i$
+- <span style="color: green;">Log model</span>: $Y_i = 20 + 3 \times log(X_i)$
+- <span style="color: gray;">Quadratic model</span>: $Y_i = 20 + 3 \times X_i^2$
+- <span style="color: blue;">Cubic model</span> $Y_i = 20 + 3 \times X_i^3$
+    - $\varepsilon \sim \mathcal{N}(0, 1)$
+
+```{r model-viz, echo=FALSE}
+# Visualize different data distributions
+p_linear <- ggplotly(
+  ggplot(dat_linear, aes(X, Y)) + 
+    geom_point(col = "red") + 
+    geom_smooth(method = lm, se = FALSE, size = 0.5) +
+    theme_minimal()
+)
+p_log <- ggplotly(
+  ggplot(dat_log, aes(X, Y)) + 
+    geom_point(col = "green") + 
+    geom_smooth(formula = y ~ log(x), se = FALSE, size = 0.5) + 
+    theme_minimal()
+)
+p_quad <- ggplotly(
+  ggplot(dat_quad, aes(X, Y)) + 
+    geom_point(col = "darkgray") + 
+    geom_smooth(formula = y ~ x^2, se = FALSE, size = 0.5) + 
+    theme_minimal()
+)
+p_cubic <- ggplotly(
+  ggplot(dat_cubic, aes(X, Y)) + 
+    geom_point(col = "blue") + 
+    geom_smooth(formula = y ~ x^3, se = FALSE, size = 0.5) +
+    theme_minimal()
+)
+subplot(p_linear, p_log, p_quad, p_cubic, nrows = 2, shareX = TRUE)
+```
+
+---
+
+## How to check linearity?
+
+What type of model should we use? （☉∀☉）
+
+```{r sim-check-linearity}
+n <- 50  # Sample size
+X <- rnorm(n, mean = 3, sd = 1)  # I.V.
+dat_tricky <- data.frame(
+  X, 
+  Y = 10 + 2 * X + 15 * log(X) -5 * X^2 + X^3 + rnorm(n, mean = 0, sd = 20) #<<
+)
+```
+
+```{r sim-check-linearity-2, echo=FALSE}
+ggplotly(
+  ggplot(dat_tricky, aes(X, Y)) + 
+    geom_point(col = "red") + 
+    theme_minimal() + 
+    ggtitle("What Type of Model should We Use?")
+) 
+```
+
+---
+
+## To Check Linearity...
+
+Let's fit a linear regression model using the correct dataset first!
+
+```{r check-linear}
+str(dat_linear)
+# Fit a linear regression model
+mod_lin <- lm(Y ~ X, data = dat_linear) #<<
+summary(mod_lin) #<<
+```
+
+---
+
+## After Fitting the Model...
+
+We can check model linearity by visualizing the distribution of residuals.
+
+```{r check-linear-2}
+par(mfrow = c(1, 2))
+plot(Y ~ X, data = dat_linear) #<<
+text(Y ~ X, data = dat_linear, labels = rownames(dat_linear), cex = 0.6, pos = 3)
+abline(a = 19.8578, b = 3.0524, col = "red")
+plot(mod_lin, which = 1) #<<
+```
+
+---
+
+## Res. vs. Fitted for Log Model
+
+```{r demo-log-viz}
+mod_log <- lm(Y ~ log(X), data = dat_log) #<<
+par(mfrow = c(1, 2))
+plot(Y ~ log(X), data = dat_log) #<<
+text(Y ~ log(X), data = dat_log, labels = rownames(dat_log), cex = 0.6, pos = 3)
+plot(mod_log, which = 1) #<<
+```
+
+---
+
+## Res. vs. Fitted for Quadratic Model
+
+```{r demo-quad-viz}
+mod_quad <- lm(Y ~ X^2, data = dat_quad) #<<
+par(mfrow = c(1, 2))
+plot(Y ~ X^2, data = dat_quad) #<<
+text(Y ~ X^2, data = dat_quad, labels = rownames(dat_quad), cex = 0.6, pos = 3)
+plot(mod_quad, which = 1) #<<
+```
+
+---
+
+## Res. vs. Fitted for Cubic Model
+
+```{r demo-cubic-viz}
+mod_cubic <- lm(Y ~ X^3, data = dat_cubic) #<<
+par(mfrow = c(1, 2))
+plot(Y ~ X^3, data = dat_cubic) #<<
+text(Y ~ X^3, data = dat_cubic, labels = rownames(dat_cubic), cex = 0.6, pos = 3)
+plot(mod_cubic, which = 1) #<<
+```
+
+---
+
+## Residuals vs. Fitted for Different Models
+
+```{r demo-all-viz}
+par(mfrow = c(2, 2))
+mod_lin <- lm(Y ~ X, data = dat_linear) #<<
+plot(lm(Y ~ X, data = dat_linear), which = 1) #<<
+plot(lm(Y ~ log(X), data = dat_log), which = 1) #<<
+plot(lm(Y ~ X^2, data = dat_quad), which = 1) #<<
+plot(lm(Y ~ X^3, data = dat_cubic), which = 1) #<<
+```
+
+---
+
+## How to check the normality of residuals?
+
+Given a linear regression model, we can check the **normality** of residuals using a **Q-Q plot**.
+
+```{r qq-plot}
+par(mfrow = c(1, 2))
+plot(mod_lin, which = 2, pch = 16) #<<
+X_perfect = c(1: 50)
+dat_perfect <- data.frame(X = X_perfect, Y = X_perfect)
+plot(lm(Y ~ X, dat = dat_perfect), which = 2, pch = 16, col = "red")
+```
+
+---
+
+## Q-Q Plot Also Applies to Other Model Types
+
+However, normality does not hold on certain model types.
+
+```{r demo-qq-viz}
+par(mfrow = c(1, 3))
+plot(mod_log, which = 2, pch = 16) #<<
+plot(mod_quad, which = 2, pch = 16) #<<
+plot(mod_cubic, which = 2, pch = 16) #<<
+```
+
+---
+
+## How to check equal variance?
+
+To check equal variance, we can again use the **Residuals vs. Fitted** plot.
+
+```{r check-equal-var, echo=FALSE}
+par(mfrow = c(2, 2))
+plot(lm(Y ~ X, data = dat_linear), which = 1)
+plot(lm(Y ~ log(X), data = dat_log), which = 1)
+plot(lm(Y ~ X^2, data = dat_quad), which = 1)
+plot(lm(Y ~ X^3, data = dat_cubic), which = 1)
+```
+
+---
+
+## How to find outliers?
+
+To check outliers, we can calculate **standardized residuals** and plot against the fitted values.
+
+```{r stu-res}
+library(MASS) #<<
+dat_linear$yhat <- predict(mod_lin) #<<
+dat_linear$sd_res <- stdres(mod_lin) #<<
+plot(sd_res ~ yhat, data = dat_linear, ylim = c(-3, 3)) #<<
+text(sd_res ~ yhat, data = dat_linear, labels = rownames(dat_linear), cex = 0.8, pos = 3)
+abline(h = 2, col = "red") #<<
+abline(h = -2, col = "red") #<<
+```
+
+---
+
+## Leverage Points
+
+Magnets. Attract vertically. Push down or pull up the regression line.
+
+```{r leverage, echo=FALSE}
+# Add a leverage point
+dat_linear_lev <- rbind(dat_linear[, c(1:2)], c(20, 2.898 * 20 + 20.609))
+# Fit a new regression model
+mod_lin_lev <- lm(Y ~ X, data = dat_linear_lev) #<<
+# Visualize 
+par(mfrow = c(1, 3))
+plot(Y ~ X, data = dat_linear_lev)
+abline(a = 19.858, b = 3.052, col = "blue")
+abline(a = 27.6744, b = 0.3917, col = "red")
+plot(mod_lin_lev, which = 1)
+plot(predict(mod_lin_lev), stdres(mod_lin_lev), ylim = c(-3, 3))
+abline(h = 2, col = "red")
+abline(h = -2, col = "red")
+```
+
+---
+
+## Influential Points
+
+Points that have influence on both directions.
+
+```{r influence, echo=FALSE}
+# Add an influence point
+dat_linear_inf <- rbind(dat_linear[, c(1:2)], c(50, 2.898 * 20 + 20.609 + 20))
+# Fit a new regression model
+mod_lin_inf <- lm(Y ~ X, data = dat_linear_inf)
+# Visualize 
+par(mfrow = c(1, 3))
+plot(Y ~ X, data = dat_linear_inf)
+abline(a = 19.858, b = 3.052, col = "blue")
+abline(a = 24.559, b = 1.403, col = "red")
+plot(mod_lin_inf, which = 1)
+plot(predict(mod_lin_inf), stdres(mod_lin_inf))
+abline(h = 2, col = "red")
+abline(h = -2, col = "red")
+```
+
+---
+
+## Detecting Influential Points
+
+```{r demo-detection}
+library(car) #<<
+influencePlot(mod_lin)
+```
+
+---
+
+class: inverse, center, middle
+
+# Regression Diagnosis
+
+---
+
+## New Dataset for Practice
+
+Dataset: [marketing.csv](https://drive.google.com/file/d/1RO3M0__Tnb_MInU9Modj8TIIuZqZG_-p/view?usp=sharing)
+
+```{r demo-load-data}
+dat <- datarium::marketing
+```
+
+**Let's move to RStudio.**
+
+---
+
+## Contact
+
+Tong Jin
+
+- Email: tj1061@nyu.edu
+- Office Hours
+  - Mondays, 9 - 10am (EST)
+  - Wednesdays, 12:30 - 1:30pm (EST)
+

@@ -4,15 +4,20 @@ subtitle: "Group Exercise Sample Solution"
 date: "`r format(Sys.time(), '%d %B %Y')`"
 output: 
   html_document:
-    df_print: default
+    df_print: paged
     theme: cosmo
     highlight: haddock
     number_sections: false
+    toc: true
+    toc_depth: 4
+    toc_float: 
+      collapsed: false
 ---
 
 ```{r setup, include=FALSE}
 # Created on: 10/12/2020
-# Modified on: 10/12/2020
+# Modified on: 10/14/2020
+# Author: Ying Lu
 # Author: Tong Jin
 
 knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
@@ -20,6 +25,7 @@ knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 # Dependencies
 library(lm.beta)
 library(car)
+library(stats)
 ```
 
 ## Description
@@ -28,11 +34,11 @@ This file is for the group assignment of **APSTA-GE: 2003 Intermediate Quantitat
 
 It contains sample solutions using base R. 
 
-All code chunks are heavily scaffolded with detail explanations. 
+All code chunks are heavily scaffolded with detail explanations to show the logic behind solutions. 
 
 ### Data processing
 
-Load lung_capacity0.csv, and add a new column labelling the row ID.
+Load `lung_capacity0.csv`, and add a new column labelling the row ID.
 
 **Answer:**
 
@@ -57,7 +63,7 @@ How does lung capacity change as people get older? (in one sentence)
 cor(dat$LungCapacitycc, dat$Age)
 ```
 
-The correlation between lung capacity and age is approx. 0.13. The correlation is not strong enough to observe a clear pattern of association.
+Originally, we thought that lung capacity decreases as people getting older, on average. However, the correlation between lung capacity and age is approximately 0.13. The correlation is not strong enough to observe a clear pattern of association. Therefore, age may not have strong influences on lung capacity.
 
 <br>
 
@@ -71,7 +77,7 @@ Eyeball the pattern. What do you see? (in one or two sentences)
 
 ```{r Q1a}
 # Create a scatter plot: LungCapacitycc (on y-axis) ~ Age (on x-axis)
-plot(dat$Age, dat$LungCapacitycc)
+plot(LungCapacitycc ~ Age, data = dat)
 ```
 
 The distribution of lung capacity over age is diverse. We did not observe a clear pattern here.
@@ -104,7 +110,7 @@ lm_Q2 <- lm(LungCapacitycc ~ Age, data = dat)
 summary(lm_Q2)
 ```
 
-The D.V. is lung capacity. The I.V. is age.
+The dependent variable is `lung capacity`. The independent variable is `age`.
 
 <br>
 
@@ -114,7 +120,7 @@ Answer below questions based on the regression result.
 
 #### 3a 
 
-What’s the regression coefficient of age on lung capacity? 
+What’s the regression coefficient of `age` on `lung capacity`? 
 
 Report the appropriate regression coefficient and its standard error (S.E.).
 
@@ -125,7 +131,9 @@ Report the appropriate regression coefficient and its standard error (S.E.).
 summary(lm_Q2)$coefficients
 ```
 
-The intercept is 5091.225. The slope is 4.021.
+The intercept is 5091.225. The standard error is 174.047.
+
+The slope is 4.021. The standard error is 3.532.
 
 The regression equation, in this case, is:
 
@@ -156,6 +164,8 @@ We used hypothesis test.
 summary(lm_Q2)$coefficients[2, ]
 ```
 
+This coefficient is not statistically significant because the p-value is greater than 0.05.
+
 <br>
 
 #### 3c
@@ -167,6 +177,8 @@ Report a 95% confidence interval for the regression coefficient of age on lung c
 ```{r Q3c}
 confint(lm_Q2)
 ```
+
+The 95% confidence interval for the coefficient of `age` on `lung capacity` is between -3.01 and 11.052.
 
 <br>
 
@@ -222,6 +234,8 @@ round(TSS) == round(MSS) + round(RSS)
 Option 2: use the `anova` function
 
 ```{r Q4b}
+#use var function to calculate TSS
+TSS <- var(dat$LungCapacitycc)*(nrow(dat)-1) 
 anova(lm_Q2)
 ```
 
@@ -230,6 +244,8 @@ Model sum of squares (MSS) = 233,569
 Residual sum of squares (RSS) = 14,054,602
 
 Total sum of squares (TSS) = 14,288,171
+
+TSS = RSS + MSS
 
 <br>
 
@@ -256,6 +272,8 @@ What’s the correlation between lung capacity and age?
 ```{r Q4d}
 # Report the correlation between lung capacity and age
 cor(dat$LungCapacitycc, dat$Age)
+# Calculate squared correlation
+cor(dat$LungCapacitycc, dat$Age)^2
 # Report R-squared
 summary(lm_Q2)$r.squared
 # Examine if the squared correlation is equal to r-squared
@@ -272,7 +290,21 @@ Based on this model, how much difference do we expect to see between 20 years ol
 
 **Answer:**
 
+To solve this, we can directly use the property of a line. 
+
+The **slope** means that when the independent variable, `X`, increases 1 unit, the dependent variable, `Y`, will increase $\beta_1$ unit. It doesn't matter whether `X` changes from 20 to 21, or 50 to 51.
+
+This also means that a 5-unit increase in `X`, say from 20 to 25, or from 50 to 55, leads to $5 \times \beta_1$ unit change in `Y`.
+
+The average change in `lung capacity` associated with a 5-year increase in `age` is: 
+
 ```{r Q5}
+5 * coefficients(lm_Q2)["Age"]
+```
+
+Alternatively, we can calculate the fitted values at different Ages then compared the differences.
+
+```{r Q5-alt}
 # Create new dataset and store independent variables for prediction
 new_dat <- data.frame(Age = c(20, 25, 60, 65))
 # Predict lung capacity using the new dataset
@@ -287,7 +319,7 @@ predict(lm_Q2, newdata = new_dat)[4] - predict(lm_Q2, newdata = new_dat)[3]
 
 Another interesting question:
 
-Can you prescribe a 95% confidence interval for the average difference in lung capacity associated with a 5-year age difference? 
+Can you prescribe a 95% confidence interval for the average difference in `lung capacity` associated with a 5-year age difference? 
 
 **Hint:** 
   $\beta_1$ is the difference due to 1-year difference in age.
@@ -309,15 +341,25 @@ Now the standard error in $\hat{\beta_1}$ is ___?
 
 ```{r Q5-3}
 # Get the standard error for the slope from the model summary
+# Note: this is a different way to pull out the slope coefficient from 
+# regression results
 summary(lm_Q2)$coefficients[2, "Std. Error"]
+
 ```
 
-What’s the standard error in $5 \times \beta_1$? It is 5 $S.E.$. 
+What’s the standard error in $5 \times \hat\beta_1$?
 
 **Answer:**
 
+It is $5 \times S.E.$ of the slope coefficient estimate.
+
 $$
-SE_{5 \times \beta_1} = 5 \times SE_{\beta_1}
+\begin{align}
+SE(5 \times \hat\beta_1) & = \sqrt{Var(5 \times \hat\beta_1)} \\
+& = \sqrt{25 \times Var(\hat\beta_1}) \\
+& = 5 \sqrt{Var(\hat\beta_1)} \\
+& = 5 \times SE(\hat\beta_1)
+\end{align}
 $$
 
 ```{r Q5-4}
@@ -332,7 +374,7 @@ se_Q5 <- summary(lm_Q2)$coefficients[2, "Std. Error"] * 5
 slope_Q5 - 2 * se_Q5
 slope_Q5 + 2 * se_Q5
 
-# Validate with: 5 * CL(beta_1)
+# Validate with: 5 * CI(beta_1)
 5 * confint(lm_Q2)["Age", ]
 ```
 
@@ -349,9 +391,12 @@ Generate a new variable based on lung capacity by dividing its original value by
 **Answer:**
 
 ```{r Q6a}
-# Calculate standardized lung capacity and store the result in `dat`
+# Calculate standardized lung capacity and store the result as a new column
+# in the original dataset
 dat$std_lungCap <- dat$LungCapacitycc / sd(dat$LungCapacitycc)
 ```
+
+<br>
 
 Generate a new variable based on age by dividing its original value by its standard deviation. 
 Run a regression using these two new variables. Report the regression coefficients (intercept and slope)
@@ -409,90 +454,69 @@ By standardization, we are able to compare the relationship between two variable
 
 ### Question 7
 
-Conduct regression diagnostics.
-
-**Hint:** R: stat package (more traditional) - influence.measures function
-          
-          R: car (fancier plots)
-          
 Regression Diagnostics
+
+**Hint:** There are (at least) two R packages you can use, the `stat` package (more traditional, `?influence.measures`) and the `car` package that provides more stylized plots.
 
 #### 7a
 
-Plot a studentized residual plot against $\hat{Y}$ (fitted values).
+What's the difference between standardized residuals and studentized residuals? 
 
 **Answer:**
 
-The relationship between standardized residual and studentized residual is:
+The relationship between **standardized** residual and **studentized** residual is:
 
 $$
-t_i = r_i \sqrt{\left( \frac{n - k - 2}{n - k - 1 - r_i^2} \right)}
+\begin{align}
+r_i & = Y_i - \hat{Y}_i \\
+s_i & = \frac{r_i}{\hat{\sigma}} \\
+t_i & = \frac{r_i}{\hat{\sigma}_{(-i)}}
+\end{align}
 $$
 
-where $r_i$ is the $i^{th}$ standardized residual, $n$ is the number of rows, and $k$ is the number of predictors. Basically, the $i^{th}$ studentized residual is the model standardized residual excluding the residual of the $i^{th}$ observation.
+where $r_i$ is the $i^{th}$ residual, $\hat{\sigma}$ is the standard deviation of the residuals, and $\hat{\sigma}_{-i}$ is the standard deviation of the residuals calculated without the $i^{th}$ point. $s_i$ is the standardized residual and $t_i$ is the studentized residual. 
 
 ```{r Q7a}
 # Calculate standardized residuals and store the result as `stand_res`
+## Option 1:
 stand_res <- residuals(lm_Q2) / sd(residuals(lm_Q2))
+## Option 2:
+stand_res <- rstandard(lm_Q2)
 
 # Calculate studentized residuals
-### Option 1: using for loop
+## Option 1: using the built-in R function
+stu_residual <- rstudent(lm_Q2)
+## Option 2: using for loop
 # Create an empty vector to store results
-stu_residual <- rep(NA, each = nrow(dat))
+stu_residual2 <- rep(NA, each = nrow(dat))
 # FOR i iterating from 1 to the number of rows (n = 80):
 for (i in 1:nrow(dat)) {
-  # Exclude the ith observation from the original dataset and store the new 
-  # dataset as `dat_new`.
-  dat_new <- dat[-i, ]
-  # Fit a new regression model based on `dat_new`
-  lm_new <- lm(LungCapacitycc ~ Age, data = dat_new)
-  # Compute studentized residual and store the result in `stu_residual`
-  stu_residual[i] <- residuals(lm_Q2)[i] / sd(residuals(lm_new))
+  stu_residual2[i] <- residuals(lm_Q2)[i] / sd(residuals(lm_Q2)[-i])
 }
 
-### Option 2: using equation
-# Create an empty vector to store results
-stu_residual_2 <- rep(NA, each = nrow(dat))
-n <- nrow(dat)  # Store the number of observations (n = 80) in a new vector `n`
-k <- 1          # Store the number of predictors (k = 1) in a new vector `k`
-# Iterate and calculate studentized residual using the above equation
-# FOR i iterating from 1 to the number of rows (n = 80):
-for (i in 1:nrow(dat)) {
-  # Calculate studentized residual using the equation and store results
-  stu_residual_2[i] <- stand_res[i] * ((n - k - 2) / (n - k - 1 - stand_res[i]^2))^0.5
-}
+# Note: 
+# 1. There are other versions of functions that can calculate studentized
+# residuals. 
+# 2. The essence is to leave one out in the calculation. 
 
-# Prove that stu_residual is equal to stu_residual_2
-table(round(stu_residual) == round(stu_residual_2))
-
-# Plot studentized residual plot against Y (fitted values)
-plot(x = predict(lm_Q2), y = stu_residual)
+# Visualize the differentce between studentized residuals and standardized 
+# residuals
+plot(x = stu_residual, y = stand_res, 
+     pch = 19,                 # Point Character Style: 19
+     xlab = "studentized",     # Label for the x-axis
+     ylab = "standardized",    # Label for the y-axis
+     cex = 0.5,                # Zoom out to 50%
+     col = "red")              # Set color as red
+abline(a = 0, b = 1)           # Draw a reference line
+                               # Intercept = 0
+                               # Slop = 1
 ```
 
-<br>
-
-##### 7a i
-
-How is figure the same or different from:
-
-Residual versus $\hat{Y}$?
+Examine two figures: residuals versus $\hat{Y}$ and residuals versus Age.
 
 **Answer:**
 
-```{r Q7a-i}
-# Plot residuals (on y-axis) against fitted values (on x-axis)
-plot(x = predict(lm_Q2), y = residuals(lm_Q2))
-```
-
-The difference between the residual plot and studentized residual plot is the measurement unit on y-axis. The residual plot uses `cc` as the measurement unit while the studentized residual plot uses `standard deviation` of residuals as the measurement unit.
-
-<br>
-
-How is figure the same or different from:
-
-Residual (or studentized residual) versus age?
-
-**Answer:**
+These two figures are almost identical, except the x axis for one is $\hat{Y}$ and `Age` for the other one. (In multiple regression, these two figures will be different, as other variables will affect $\hat{Y}$ as well.)
 
 ```{r Q7a-i-2}
 # Create a 1-by-2 grid
@@ -503,50 +527,27 @@ plot(x = predict(lm_Q2), y = residuals(lm_Q2))
 plot(x = dat$Age, y = residuals(lm_Q2))
 ```
 
-The difference between the residual plot versus `Y` and the residual plot versus `Age` is the variable on the y-axis. The distribution looks the same.
+The difference between the residual plot versus `Y` and the residual plot versus `Age` is the variable on the y-axis. The pattern looks essentially the same and the only difference is the scale of the axes. This is true for in simple regression but not true for multiple regression.
 
 <br>
-
-Difference between standardized and studentized residuals?
-
-**Answer:**
-
-```{r Q7a-i-3}
-# Create a 1-by-2 grid
-par(mfrow = c(1, 2))
-# Plot residuals against fitted lung capacity
-plot(x = predict(lm_Q2), y = stand_res)
-# Plot residuals against age
-plot(x = predict(lm_Q2), y = stu_residual)
-```
-
-Standardized residuals are calculated using residuals divided by the standard deviation of residuals of the entire model. Studentized residuals are calculated by dividing residuals by the standard deviation of residuals of a new model which excludes each observation.
-
-The difference between standardized and studentized residuals is marginal.
-
-```{r Q7a-i-3-2}
-range(stand_res - stu_residual)
-```
-
-<br>
-
-##### 7a ii
 
 Any outliers? Use -2 and 2 as fences.
 
 **Answer:**
 
 ```{r Q7a-ii}
-# Detect outliers using studentized residuals
-# Store the index of studentized residuals that is greater than 2 or smaller than -2
+# Detect outliers using studentized residuals.
+# Store the index of studentized residuals that is greater than 2 or smaller 
+# than -2.
 index <- which(stu_residual > 2 | stu_residual < -2)
 # Subset outliers from the original dataset using index
 dat_outlier <- dat[index, ]
 print(dat_outlier)
 
+
 # Visualize outliers, using -2 and 2 as fences
 plot(x = predict(lm_Q2), y = stu_residual)
-abline(h = -2, col = "red")
+abline(h = -2, col = "red")     # Draw a horizontal line at y = -2
 abline(h =  2, col = "red")
 ```
 
@@ -554,36 +555,28 @@ abline(h =  2, col = "red")
 
 ##### 7a iii
 
-Based on eyeballing, does linear relationship hold?
-
-**Answer:**
-
-```{r Q7a-iii}
-# Reprint the plot
-plot(x = predict(lm_Q2), y = stu_residual)
-```
-
-No.
-
-<br>
-
-Test linearity by including a quadratic term.
+Based on eyeballing, does linear relationship hold? 
 
 **Answer:**
 
 ```{r Q7a-iii-2}
 # Create a 1-by-2 grid
 par(mfrow = c(1, 2))
-# Plot residuals vs. fitted values
-plot(lm_Q2, which = 1)
+# Plot Residuals vs. predictor (Age) using linear model: lm_Q2
+plot(dat$Age, residuals(lm_Q2))
+lines(lowess(residuals(lm_Q2) ~ dat$Age), col = "red") # Add a smooth trend line
+abline(h = 0)
 
 # Fit a new regression model with a new quadratic term
-lm_Q7 <- lm(LungCapacitycc ~ Age + Exercise^2, data = dat)
-# Plot residuals vs. fitted values
-plot(lm_Q7, which = 1)
+dat$Age2 <- dat$Age^2
+lm_Q7 <- lm(LungCapacitycc ~ Age + Age2, data = dat)
+# Plot Residuals vs. predictor (Age) using model: lm_Q7
+plot(dat$Age, residuals(lm_Q7))
+lines(lowess(residuals(lm_Q7) ~ dat$Age), col = "red")
+abline(h = 0)
 ```
 
-After adding a quadratic term, the linarity can be observed.
+The red line is smoothed trend line. In general, when the linear relationship holds, we shouldn't expect to see any trend between residuals and the predictor. The left panel plots residuals versus `Age`, and the red line is the trend line. It doesn't seem like there is much of trend going up or down, or a particular quadratic shape (*we will get back to this point when we talk about polynomial regression.*) The right panel shows the residuals versus `Age` plot based on the model that the squared `Age` term is included. In this partiular example, we don't see much change. 
 
 <br>
 
@@ -593,24 +586,44 @@ Based on eyeballing, does equal variance hold?
 
 **Answer:**
 
-Looks like it is normally distributed.
+The spread of residuals (along vertical axis) appears to be reasonably equal along the x-axis. **This suggests that equal variance is a reasonable assumption.**
 
+```{r Q7a-iv-equalvar}
+plot(x = predict(lm_Q2), y = residuals(lm_Q2))
+```
 <br>
 
-Test for equal variance.
+Examine whether the normality assumption holds. 
 
 **Answer:**
 
-```{r Q7a-iv}
+```{r Q7a-iv-normality}
+# Create a 1-by-2 grid
+par(mfrow = c(1, 2))
 # Check normality using qq-plot
-qqnorm(stu_residual)
+qqnorm(stand_res)
 # Draw a 45-degree abstract reference line with intercept = 0, slope = 1
 abline(a = 0, b = 1, lty = "dotted")
+# Plot a histogram to examine the distribution of standardized residuals
+hist(stand_res, 
+     freq = FALSE,        # FALSE for probability density
+     xlim = c(-3,3),      # x axis limits
+     ylim = c(0,0.45),    # y axis limits
+     main = "standardized resid versus normal dist")
+lines(density(stand_res)) # Add a density reference line in black
+# Add a normal reference line in red
+lines(x = seq(from = -3, to = 3, by = 0.1), 
+      y = dnorm(seq(from = -3, to = 3, by = 0.1), mean = 0, sd = 1), 
+      col = "red")
 ```
 
-<br>
+**Left panel**: Q-Q plot of the residual terms allow us to examine the normality assumption. 
 
-##### Question 7a v
+**Right panel**: histogram of the standardized residuals is compared with the normal distribution. 
+
+In this case, the normality assumption doesn't hold very nicely, but, on the other hand, there is no obvious deviation (i.e. the distribution is still largely symmetric and unimodal).
+
+<br>
 
 Any observations have leverage, and high influence?
 
@@ -622,8 +635,8 @@ Eyeball by overlaying the fitted line - outliers along x and y axes?
 # Reprint the plot
 plot(x = predict(lm_Q2), y = stu_residual)
 # Draw two fitted lines for reference
-abline(h = mean(stu_residual), col = "red")
-abline(v = mean(predict(lm_Q2)), col = "red")
+abline(h = mean(stu_residual), col = "red", lty = "dotted")
+abline(v = mean(predict(lm_Q2)), col = "red", lty = "dotted")
 ```
 
 <br>
@@ -638,14 +651,32 @@ Use a fancy plot.
 influencePlot(lm_Q2)
 ```
 
+**Observations 65, 14 and 19 appear to have the largest Cook's Distance.**
+
 <br>
 
-Use Cook’s D, Deffits.
+Examine influence measures **Cook’s Distance** and **Dffits**.
 
 **Answer:**
 
 ```{r Q7a-v-3}
+# Option 1
 summary(influence.measures(lm_Q2))
+
+# Option 2: compute all measures
+dat$cooksD <- cooks.distance(lm_Q2)                    # Cook's distance
+dat$dffits <- dffits(lm_Q2)                            # Diffits
+dat$leverage <- hatvalues(lm_Q2)                       # Find large hat values
+# Detect influential points
+influenceID <- dat$ID[dat$cooksD > 4/nrow(dat)]        # Threshold: 4/n
+dffitsID <- dat$ID[dat$dffits>2 / (sqrt(2/nrow(dat)))] # Threshold: 2/sqrt(2/n)
+dat$stand_res <- stand_res
+# Detect outliers
+outlierID <- dat$ID[abs(dat$stand_res) > 2]            # Greater than two-sigma
+# Create a vector to store the index of influential points
+star.points <- union(influenceID, dffitsID)
+star.points <- union(star.points, outlierID)
+print(dat[star.points, ])
 ```
 
 <br>
@@ -661,7 +692,7 @@ Remove outlier data points, what happens? Things to check:
 
 ```{r Q7a-vi}
 # Remove outliers from the original dataset using index
-dat_no_outlier <- dat[-index, ]
+dat_no_outlier <- dat[-outlierID, ]
 # Fit a new regression model
 lm_Q7_no_out <- lm(LungCapacitycc ~ Age, data = dat_no_outlier)
 # Get the model summary
@@ -674,7 +705,7 @@ The old standard error is 3.532. The new statistic is 3.241. The standard error 
 
 The old r-squared is 0.01635. The new one is 0.1995. The r-squared increases, indicating that more variance can be explained by the new model.
 
-##### 7a vii
+<br>
 
 Remove influential data points, what happens?
 
@@ -682,9 +713,8 @@ Remove influential data points, what happens?
 
 ```{r Q7a-vii}
 # Update index to store influential points pulled from influentialPlot
-index <- c(3, 14, 19, 65)
 # Remove influential points from the original dataset
-dat_no_influ <- dat[-index, ]
+dat_no_influ <- dat[-influenceID, ]
 # Fit a new regression model
 lm_Q7_no_influ <- lm(LungCapacitycc ~ Age, data = dat_no_influ)
 # Get the model summary
@@ -695,122 +725,75 @@ After excluding influential points, the model continues to perform better.
 
 <br>
 
-##### 7a viii
+### 7b
 
-For curious minds, if we remove data points that have high leverage but not an outlier or influential, what will happen? 
-
-Can you fabricate some points to test the ideas?
+Notice that, in the dataset, we didn't really have high influential points nor high leverage points. For the curious minds, if we remove data points that have high leverage but not an outlier or influential, what will happen? 
 
 **Hint:** you can add a new observation with a pair of lung capacity and age values of your choice and attach this new row to the existing data.
 
-**Answer:**
+**Sample Answer:**
 
-Leverage points are outliers along the independen variable but not along the dependent variable. 
+```{r Q7b-1}
+# Replot the scatterplot with wider x and y axes ranges
+plot(LungCapacitycc ~ Age, data = dat, 
+     xlim = c(0, 80), 
+     ylim = c(1000, 6500))
+abline(a = coef(lm_Q2)[1], b = coef(lm_Q2)[2], lty = "dotted") # Original regression line
+# Manually drop a few data points
+points(10, 3000, col = "blue")     # An influential point?
+points(3 , 1200, col = "red")      # Another influential point?
+points(50, 1500, col = "green")    # Definitely an outlier, but influential? 
 
-Let's generate 80 new points with the following characteristics:
+# Duplicate the dataset
+datnew <-dat
+datnew <- rbind(datnew, rep(NA, ncol(datnew))) # Add a several new rows
 
-- New values of independent variable = independent variable (Age) + 50
-- New values of dependent variable = fitted values of lung capacity
-
-```{r Q7a-viii}
-# Generate leverage data points based on model equation
-Age <- dat$Age + 50
-LungCapacitycc <- predict(lm_Q2)
-# Convert them into a data frame
-new_dat <- data.frame(LungCapacitycc, Age)
-# Examine the new data frame
-# The age values are ridiculously high
-head(new_dat)
-# Subset the original dataset by column
-dat_curious_origin <- dat[, c("LungCapacitycc", "Age")]
-# Combine `new_dat` with original dataset using `rbind` (row bind)
-dat_curious <- rbind(dat_curious_origin, new_dat)
-# Plot the new dataset
-plot(dat_curious$Age, dat_curious$LungCapacitycc)
+# Red point
+# Age: 3
+# Lung capacity: 1200
+datnew$Age[81] <- 3
+datnew$LungCapacitycc[81] <- 1200
 # Fit a new regression model
-lm_curious <- lm(LungCapacitycc ~ Age, data = dat_curious)
-# Get the model summary
-summary(lm_curious)
+lm_Q_p1 <- lm(LungCapacitycc ~ Age, dat = datnew)
+abline(a = coef(lm_Q_p1)[1], b = coef(lm_Q_p1)[2], col = "red") # Regression line
+
+# Blue point
+# Age: 10
+# Lung capacity: 3000
+datnew$Age[81] <- 10
+datnew$LungCapacitycc[81] <- 3000
+# Fit a new regression model
+lm_Q_p2 <- lm(LungCapacitycc ~ Age, dat = datnew)
+abline(a = coef(lm_Q_p2)[1], b = coef(lm_Q_p2)[2], col = "blue") # Reg line
+
+# Green point
+# Age: 50
+# Lung capacity: 1500
+datnew$Age[81] <- 50
+datnew$LungCapacitycc[81] <- 1500
+# Fit a new regression model
+lm_Q_p3 <- lm(LungCapacitycc ~ Age, dat = datnew)
+abline(a = coef(lm_Q_p3)[1], b = coef(lm_Q_p3)[2], col = "green") # Reg line
 ```
 
-After adding new leverage data points with ridiculous age values, we fit a new regression model. Now the relationship between lung capacity and age becomes significant. The standard error is marginal and the model has perfect performance. This is an example of how leverage points have leverages on the model fit.
-
-##### 7a ix
-
-Lastly, think about when should we remove point(s) and when should we not remove point(s) from regression? What are the pros and cons?
-
-**Answer:**
-
-Things to consider:
-
-1. The ratio between sample size and number of outliers
-
-2. When sample size increases, the influence of individual point decreases.
-
-3. Types of regression
-
-4. Number of independent variables
-
-When sample size is small, for example, less than 30, we should not remove points, even for influential points. This is because for a small sample, each point has great influence on model prediction. Removing points from a small sample affects model integrity. 
-
-For example:
-
-```{r Q7a-ix}
-set.seed(1234)
-# Generate a simulated dataset
-# The distribution of I.V. of the first 20 points follows normal
-dat_sim_x <- rnorm(n = 20, mean = 3, sd = 2)
-# Generate D.V. based on equation: D.V. = 10 * I.V. + error
-error <- rnorm(n = 10, mean = 0, sd = 1)
-dat_sim_y <- dat_sim_x * 10 + error
-# Add influential points which follow a quadratic equation: 
-# D.V. = 100 + I.V.^2
-dat_sim_x_quad <- rnorm(n = 10, mean = 3, sd = 6)
-error <- rnorm(n = 10, mean = 0, sd = 1)
-dat_sim_y_quad <- 100 + dat_sim_x_quad^2 + error
-# Combine and store in a data frame
-X <- c(dat_sim_x, dat_sim_x_quad)
-Y <- c(dat_sim_y, dat_sim_y_quad)
-dat_sim <- data.frame(Y, X)
-# Fit a linear regression model
-lm_sim <- lm(Y ~ X, data = dat_sim)
-# Get the model summary
-summary(lm_sim)
-# Plot dat_sim
-plot(dat_sim$X, dat_sim$Y)
-# Fit a linear regression line based on the model
-abline(a = 49.829, b = 6.161, col = "red")
+```{r Q7b-red}
+# Measures for the red dot
+cooks.distance(lm_Q_p1)[81]
+hatvalues(lm_Q_p1)[81]
+rstandard(lm_Q_p1)[81]
 ```
 
-Here we generate a simuated dataset which contains 30 data points: the first 20 points have an independent variable that follows normal distribution with mean at 3 and standard deviation of 2. The I.V. of the last 10 points follows normal with mean at 3 and standard deviation of 6. In this way, we can ensure that some of the last 10 points are at least leverage points. 
-
-For the first 20 points, we fit D.V. using a linear equation:
-
-$$
-Y_{1:20} = 10 \times X_{1:20} + \varepsilon
-$$
-
-For the last 10 points, we fit D.V. using a quadratic equation: 
-
-$$
-Y_{21:30} = 100 + X_{21:30}^2 + \varepsilon
-$$
-
-There is no surprise that the linear regression model is poorly fitted. Let's exclude two influential points on the upper left and right corners. 
-
-```{r Q7a-ix-2}
-# Exclude two influential points
-dat_sim_28 <- dat_sim[-which(dat_sim$Y > 180), ]
-# Fit a linear regression model
-lm_sim_28 <- lm(Y ~ X, data = dat_sim_28)
-# Get the model summary
-summary(lm_sim_28)
-# Plot dat_sim
-plot(dat_sim_28$X, dat_sim_28$Y)
-# Fit a linear regression line based on the model
-abline(a = 57.632, b = -6.893, col = "red")
+```{r Q7b-blue}
+# Measures for the blue dot
+cooks.distance(lm_Q_p2)[81]
+hatvalues(lm_Q_p2)[81]
+rstandard(lm_Q_p2)[81]
 ```
 
-After excluding two most influential points, we observe a very different linear regression line. The relationship between I.V. and D.V. suddenly becomes significant. The new regression line has a completely different direction, as compared to the previous one. This demonstrates the influences of points in a small sample.
+```{r Q7b-green}
+# Measures for the green dot
+cooks.distance(lm_Q_p3)[81]
+hatvalues(lm_Q_p3)[81]
+rstandard(lm_Q_p3)[81]
+```
 
-<br>

@@ -1,0 +1,290 @@
+---
+title: "APSTA-GE 2003: Intermediate Quantitative Methods"
+subtitle: "Lab Section 003, Week 7"
+institute: "New York University"
+date: "10/20/2020"
+output:
+  xaringan::moon_reader:
+    css: ["styles.css", "styles-font.css"]
+    self_contained: TRUE
+    seal: TRUE
+    lib_dir: libs
+    nature:
+      ratio: '16:10'
+      highlightStyle: github
+      highlightLines: TRUE
+      countIncrementalSlides: FALSE
+---
+
+```{r setup, include=FALSE}
+# Author: Tong Jin
+# Date created: 10/20/2020
+# Date modified: 10/20/2020
+
+knitr::opts_chunk$set(
+  echo = TRUE, 
+  message=FALSE, 
+  warning=FALSE, 
+  fig.height = 6,
+  fig.width = 10
+)
+
+# Dependencies
+library(plotly)
+library(openintro)
+library(DT)
+library(grid)
+library(gridExtra)
+
+set.seed(1111)
+```
+
+## Reminders
+
+- **Group Assignment**
+
+  - Solutions available [HERE](https://drive.google.com/drive/folders/17GnapKdf_PzsHo1s0vMCx_gFZIq7v5qE?usp=sharing)
+  - Comments on group submission available soon
+  
+- **Assignment 4**
+
+  - Due: **10/28/2020 11:55pm (EST)**
+  
+- Office hours
+
+  - Monday 9 - 10am (EST)
+  - Wednesday 12:30 - 1:30pm (EST)
+  - Additional time slots available
+    - Sign-up sheet [HERE](https://docs.google.com/spreadsheets/d/1YY38yj8uCNIm1E7jaI9TJC494Pye2-Blq9eSK_eh6tI/edit?usp=sharing)
+  
+- Office hour Zoom link
+  - https://nyu.zoom.us/j/97347070628 (pin: 2003)
+  
+- Office hour notes
+  - Available on NYU Classes
+- Updates on the shiny app soon
+
+---
+
+## Today's Topics
+
+- Review on Regression Analysis
+
+  - Influential vs. Leverage Points
+  
+- (Slightly) Review on Multiple Regression
+    
+- Regression Simulation
+
+  - Using Simulator on Shiny App
+
+---
+class: inverse, center, middle
+
+# Review Regression Analysis
+
+---
+
+## Influential vs. Leverage Points
+
+- How to measure distance?
+    - **Outlier**: distance between the point and the **regression line**
+    - **Leverage**: 
+      - the x value of the point is far from the data
+      - distance between the point and the regression line is not far
+    - **Influential**:
+      - the x value of the point is far from the data
+      - distance between the point and the regression line is far
+
+---
+
+## Visualize Leverage Points
+
+- **Linear equation**: $Y_i = \beta_1 + \beta_2 \cdot X_i$
+
+Add a leverage point.
+
+```{r vis-leverage, echo=FALSE}
+# Generate simulated data
+n <- 50
+X <- rnorm(n, mean = 3, sd = 1)
+dat <- data.frame(X, Y = 20 + 3 * X + rnorm(n,0,1))       # Linear model
+
+# Fit a lm model
+mod_lin <- lm(Y ~ X, data = dat)
+
+# Add outliers
+lev_point <- c(10, 2.824 * 10 + 10.11)
+dat_lev <- rbind(dat, lev_point)
+
+# Visualize different data distributions
+p_lev <- ggplot(dat_lev, aes(X, Y)) + 
+  geom_point(col = "red") + 
+  theme_minimal()
+# Plot graphs
+ggplotly(p_lev)
+```
+
+---
+
+## Check Effects on Leverage Points
+
+```{r vis-leverage-lm-line, echo=FALSE}
+p_lev <- p_lev +
+  geom_smooth(data = dat, method = "lm", se = FALSE, color = "blue") + 
+  geom_smooth(data = dat_lev, method = "lm", se = FALSE, color = "green") + 
+  labs(title = "Original vs. Leverage Lines")
+ggplotly(p_lev)
+```
+
+---
+
+## Visualize Influential Points
+
+- **Linear equation**: $Y_i = \beta_1 + \beta_2 \cdot X_i$
+
+Add an influential point.
+
+```{r vis-influential, echo=FALSE}
+# Add outliers
+inf_point <- c(10, 2.824 * 10 - 5)
+dat_inf <- rbind(dat, inf_point)
+
+# Visualize different data distributions
+p_inf <- ggplot(dat_inf, aes(X, Y)) + 
+  geom_point(col = "red") + 
+  theme_minimal()
+# Plot graphs
+ggplotly(p_inf)
+```
+
+---
+
+## Check Effects on Influential Points
+
+```{r vis-influential-lm-line, echo=FALSE}
+p_inf <- p_inf +
+  geom_smooth(data = dat, method = "lm", se = FALSE, color = "blue") + 
+  geom_smooth(data = dat_inf, method = "lm", se = FALSE, color = "green") +
+  labs(title = "Original vs. Influential Lines")
+ggplotly(p_inf)
+```
+
+---
+
+## Compare Visualization on Leverage and Influential
+
+```{r compare-lev-vs-inf, echo=FALSE}
+grid.arrange(p_lev, p_inf, ncol = 2)
+```
+
+---
+
+## Detecting Influential Points
+
+Locate outliers by their index numbers
+
+```{r demo-detection}
+library(car)
+plot(mod_lin, which = 1) #<<
+```
+
+---
+
+## How to Remove Outliers from Data?
+
+```{r dat-full, echo=FALSE}
+dat_full <- rbind(dat, lev_point, inf_point)
+```
+
+
+```{r rm-outliers}
+DT::datatable(dat_full, options = list(pageLength = 5))
+summary(dat_lev)
+```
+
+---
+
+## How to Remove Outliers from Data? (Continued)
+
+```{r rm-outliers-2}
+# Option 1:
+dat_clean   <- dat_full[-c(51, 52), ]
+# Option 2:
+dat_clean_2 <- dat_full[c(1:50), ]
+
+table(dat_clean == dat_clean_2)
+```
+
+---
+
+class: inverse, center, middle
+
+# Review on Multiple Regression
+
+---
+
+## Multiple Regression
+
+- Regression with two or more independent variables
+
+- To interpret, control one or more independent variables
+
+- Equation: $$Y = \beta_0 + \beta_1 \cdot X_1 + \beta_2 \cdot X_2 + ... + \beta_i \cdot X_i + \varepsilon$$
+
+- Dummy variables:
+
+    - Regression cannot accept categorical variables directly
+    - Convert to numeric variables
+
+---
+
+## Demo: Simple Regression Model
+
+```{r demo-multi-reg}
+dat_demo <- datarium::marketing
+# Fit a simple regression model
+summary(mod_sing <- lm(sales ~ youtube, data = dat_demo)) #<<
+```
+
+---
+
+## Demo: Multiple Regression Model
+
+```{r demo-multi-reg-2}
+# Fit a multiple regression model
+summary(mod_multi <- lm(sales ~ youtube + facebook + newspaper, data = dat_demo)) #<<
+```
+
+---
+
+## Demo: Comparison
+
+```{r demo-compare-models}
+mod_sing$coefficients
+mod_multi$coefficients
+```
+
+---
+
+class: inverse, center, middle
+
+# Regression Simulation
+
+---
+
+## Regression Simulation
+
+**Let's move to the Shiny App.**
+
+---
+
+## Contact
+
+Tong Jin
+
+- Email: tj1061@nyu.edu
+- Office Hours
+  - Mondays, 9 - 10am (EST)
+  - Wednesdays, 12:30 - 1:30pm (EST)
+

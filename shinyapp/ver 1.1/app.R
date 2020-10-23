@@ -4,7 +4,7 @@
 # Subtitle: Shiny Course Site
 # 
 # Data Created: 10/14/2020
-# Data Modified: 10/20/2020
+# Data Modified: 10/22/2020
 #
 # ----- ----- Author ----- -----
 #
@@ -50,38 +50,45 @@ a_syllabus <- "https://docs.google.com/document/d/1YSyH7IN3p-vUzAkcjw4CUFB-utiOI
 a_zoom_reg <- "https://nyu.zoom.us/meeting/register/tJAsduCvrzwsGtCAswXfHUr1a2Wz-gYTZnZg"
 
 # User Interface ---------------------------------------------------------------
-ui <- navbarPage(  # Create a page with a top level navi bar
+ui <- navbarPage(  # Create pages with a top level navi bar
   
   # App title ----
   title = "NYU APSTA-GE: 2003 Intermediate Quantitative Methods",
   
-  # Tab: welcome page ----
-  tabPanel(title = "Welcome", class = "welcome",
-    div(    id = "welcome-title",
+  # Page 1: home ----
+  tabPanel(title = "Home", class = "home",
+    
+    div(id = "home-title",
       h3("Welcome to IQM: General Linear Model Course Site")
     ),
-    hr(),                                                      # Horizontal line
-    mainPanel(
-      width = 10,
-      div(    id = "welcome-course-info",
-              h4("Instructors: "),
-              tags$ul(
-                tags$li("Instructor: ",         a(href=a_ying_lu_nyu, "Ying Lu")),
-                tags$li("Teaching Assistant: ", a(href=a_tong_jin_nyu, "Tong Jin")),
-                tags$li("Teaching Assistant: ", a(href=a_lisa_song_nyu, "Lisa Song")),
-              ),
-              
-              h4("Course Information:"),
-              tags$ul(
-                tags$li("Term: Fall 2020"),
-                tags$li(a(href=a_syllabus, "Syllabus"), "(NYU ID required)"),
-                tags$li("Zoom Registration: ", a(href="a_zoom_reg", "Click here")),
-                tags$li("Zoom Classroom: ", strong("941 1971 7604"), 
-                        "(Passcode available on the Syllabus)"),
-              ),
-      )
-    ) # <END welcome-mainPanel>
-  ), # <END welcome
+    hr(), # Horizontal line
+    
+    # Create a navi list layout
+    navlistPanel(
+      # Content 1: course info ----
+      tabPanel(title = "Course Information", class = "home-navi-info",
+        div(id = "home-navi-info-instructor",
+          h4("Instructors: "),
+          tags$ul(
+            tags$li("Instructor: ", a(href=a_ying_lu_nyu, "Ying Lu")),
+            tags$li("Teaching Assistant: ", a(href=a_tong_jin_nyu, "Tong Jin")),
+            tags$li("Teaching Assistant: ", a(href=a_lisa_song_nyu, "Lisa Song")),
+          ),
+                                
+                                h4("Course Information:"),
+                                tags$ul(
+                                  tags$li("Term: Fall 2020"),
+                                  tags$li(a(href=a_syllabus, "Syllabus"), "(NYU ID required)"),
+                                  tags$li("Zoom Registration: ", a(href="a_zoom_reg", "Click here")),
+                                  tags$li("Zoom Classroom: ", strong("941 1971 7604"), 
+                                          "(Passcode available on the Syllabus)"),
+                                ),
+                        )
+               ) # <END home-info>
+      ), # <END> home-navi-info
+    ), # <END> home-navi
+  ), # <END> home
+  
   
   # Tab: LM simulator ----
   #      Fit a regression model with simulated data
@@ -237,7 +244,6 @@ server <- function(input, output){
       dd <- dd[ ,c(5, 1:4)]  # Drop unnecessary results
       names(dd)[5] <- "p-value"
       names(dd)[3] <- "Std. Error"
-      rownames(dd) <- c("Intercept", "Slope")
       dd[, 2:5] <- lapply(dd[, 2:5], round,3)
       dd
       }, 

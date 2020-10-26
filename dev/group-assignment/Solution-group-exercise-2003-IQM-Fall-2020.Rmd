@@ -16,7 +16,7 @@ output:
 
 ```{r setup, include=FALSE}
 # Created on: 10/12/2020
-# Modified on: 10/14/2020
+# Modified on: 10/25/2020
 # Author: Ying Lu
 # Author: Tong Jin
 
@@ -45,7 +45,7 @@ Load `lung_capacity0.csv`, and add a new column labelling the row ID.
 ```{r load}
 # Load data
 # Add a new column: ID: row number
-dat <- read.csv("lung_capacity0.csv")
+dat <- read.csv("../data/lung_capacity0.csv")
 # Create a new column called "ID" and assign the number of rows.
 dat$ID <- 1:nrow(dat) # assign 1 to 80 to the "ID" column in `dat`
 ```

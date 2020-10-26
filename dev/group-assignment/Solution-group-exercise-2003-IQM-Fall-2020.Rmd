@@ -16,7 +16,7 @@ output:
 
 ```{r setup, include=FALSE}
 # Created on: 10/12/2020
-# Modified on: 10/25/2020
+# Modified on: 10/26/2020
 # Author: Ying Lu
 # Author: Tong Jin
 
@@ -30,11 +30,13 @@ library(stats)
 
 ## Description
 
-This file is for the group assignment of **APSTA-GE: 2003 Intermediate Quantitative Methods** course in Fall 2020. 
+This file is for the group assignment of **APSTA-GE: 2003 Intermediate Quantitative Methods** course in Fall 2020. It contains sample solutions using base R. 
 
-It contains sample solutions using base R. 
+*All code chunks are heavily scaffolded with detail explanations to show the logic behind solutions.*
 
-All code chunks are heavily scaffolded with detail explanations to show the logic behind solutions. 
+### Exercise Questions
+
+[Group Exercise - 2003: IQM - Fall 2020](https://docs.google.com/document/d/1BkZAa453Hmbe4C4ydLiNTpp78Z6HJfA5vXdD-cEQPA4/edit?usp=sharing)
 
 ### Data processing
 
@@ -448,7 +450,42 @@ Standardized slope is equal to correlation.
 
 What is the meaning of the intercept now?
 
-By standardization, we are able to compare the relationship between two variables which originally have different measurement units. In this case, lung capacity is measured in `cc` while age is measured in `year`.
+**Answer:**
+
+**Note that we applied different equations in these two approaches: **
+
+For the first approach, we get a standardized (but not centered) variable by dividing original values with their standard deviation:
+
+$$
+\frac{X}{sd(X)}
+$$
+
+Now if we fit a new regression using standardized variables, we’ll get: 
+
+- intercept = 11.972
+- slope = 0.128
+
+This regression model uses standard deviation as its measurement unit. The average of standardized lung capacity is 12.420. The average of standardized age is 3.506. So, if we take the mean value of standardized age as independent variable and put it in the model, we get: 
+
+$$
+0.128 * 3.506 = 0.448
+$$
+
+Adding the intercept, we get: 
+
+$$
+0.448 + 11.972 = 12.420
+$$
+
+, which is the mean value of the standardized lung capacity. A non-zero intercept indicates that our standardized regression model is not centered (shifting up if intercept is positive; down if negative).
+
+For the second approach, we calculate a centered and standardized variable by first subtracting original values with their mean value:
+
+$$
+\frac{X - \overline{X}}{sd(X)}
+$$
+
+Now, since our scaling process involves both standardization and centering, we get an intercept that is zero. 
 
 <br>
 
@@ -727,11 +764,15 @@ After excluding influential points, the model continues to perform better.
 
 ### 7b
 
-Notice that, in the dataset, we didn't really have high influential points nor high leverage points. For the curious minds, if we remove data points that have high leverage but not an outlier or influential, what will happen? 
+Notice that, in the dataset, we didn't really have high influential points nor high leverage points. 
+
+#### 7b i
+
+For the curious minds, if we remove data points that have high leverage but not an outlier or influential, what will happen? Can you fabricate some points to test the ideas?
 
 **Hint:** you can add a new observation with a pair of lung capacity and age values of your choice and attach this new row to the existing data.
 
-**Sample Answer:**
+**Answer:**
 
 ```{r Q7b-1}
 # Replot the scatterplot with wider x and y axes ranges
@@ -740,9 +781,9 @@ plot(LungCapacitycc ~ Age, data = dat,
      ylim = c(1000, 6500))
 abline(a = coef(lm_Q2)[1], b = coef(lm_Q2)[2], lty = "dotted") # Original regression line
 # Manually drop a few data points
-points(10, 3000, col = "blue")     # An influential point?
-points(3 , 1200, col = "red")      # Another influential point?
-points(50, 1500, col = "green")    # Definitely an outlier, but influential? 
+points(x = 10, y = 3000, pch = 16, col = "blue")     # Influential
+points(x = 3 , y = 1200, pch = 16, col = "red")      # Leverage
+points(x = 50, y = 1500, pch = 16, col = "green")    # Outlier
 
 # Duplicate the dataset
 datnew <-dat
@@ -776,24 +817,47 @@ lm_Q_p3 <- lm(LungCapacitycc ~ Age, dat = datnew)
 abline(a = coef(lm_Q_p3)[1], b = coef(lm_Q_p3)[2], col = "green") # Reg line
 ```
 
+The above plot shows the effect of three outliers to the regression model. The blue dot is a leverage point (along x-axis but close to the regression line). The red one is an influential point (along both x and y). The green one is simply an outlier (along y but not along x). The dotted line is the original regression line (without outliers). The color of each new regression line matches to the color of outliers. Results indicate that the red point has the largest influence to the model, followed by the blue point, then the green point. 
+
 ```{r Q7b-red}
-# Measures for the red dot
-cooks.distance(lm_Q_p1)[81]
-hatvalues(lm_Q_p1)[81]
-rstandard(lm_Q_p1)[81]
+# Create three vectors to store distance results
+outlier_red <- c(cooks.distance(lm_Q_p1)[81], 
+                 hatvalues(lm_Q_p1)[81],
+                 rstandard(lm_Q_p1)[81])
+outlier_blue <- c(cooks.distance(lm_Q_p2)[81], 
+                 hatvalues(lm_Q_p2)[81],
+                 rstandard(lm_Q_p2)[81])
+outlier_green <- c(cooks.distance(lm_Q_p3)[81], 
+                 hatvalues(lm_Q_p3)[81],
+                 rstandard(lm_Q_p3)[81])
+# Create a data frame to store vectors
+outlier_distance <- data.frame(
+  "Red" = outlier_red,
+  "Blue" = outlier_blue,
+  "Green" = outlier_green
+)
+# Add row labels
+rownames(outlier_distance) <- c(
+  "Cook's Distance",
+  "Estimated Value",
+  "Standardized Residual"
+)
+# Print the data frame
+outlier_distance
 ```
 
-```{r Q7b-blue}
-# Measures for the blue dot
-cooks.distance(lm_Q_p2)[81]
-hatvalues(lm_Q_p2)[81]
-rstandard(lm_Q_p2)[81]
-```
+From the above table, we see that the red point has the largest Cook's distance. Although the green point has a large standardized residual, it casts only marginal effects to the model. 
 
-```{r Q7b-green}
-# Measures for the green dot
-cooks.distance(lm_Q_p3)[81]
-hatvalues(lm_Q_p3)[81]
-rstandard(lm_Q_p3)[81]
-```
+#### 7b ii
 
+Lastly, think about when should we remove point(s) and when should we not remove point(s) from regression? What are the pros and cons?  
+
+**Answer:**
+
+When dealing with model fit, we really need to think about the bias-variance tradeoff. Model bias is determined by how well can the model explain the variation of the data. Variance is about how well can the model make predictions that reveal the true variation of the data. Ideally, we want to minimize bias and variance. However, in reality, it’s often difficult to achieve. Increasing the complexity will cause overfitting. Increasing sample size will alter model fit. Therefore, it’s hard to get to a perfect balance between bias and variance. When it comes to outliers, we need to do the same thing. Think and test: 
+
+- Will the model bias increase too much if we remove an outlier? 
+- Will I have more confidence with my model if I remove an outlier? 
+- Is it the outlier that causes poor model fit? 
+
+This [article](https://towardsdatascience.com/understanding-the-bias-variance-tradeoff-165e6942b229) is worth reading.

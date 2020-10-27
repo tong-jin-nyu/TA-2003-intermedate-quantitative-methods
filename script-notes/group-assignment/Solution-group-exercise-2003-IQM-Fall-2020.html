@@ -10,7 +10,7 @@
 
 
 
-<meta name="date" content="2020-10-26" />
+<meta name="date" content="2020-10-27" />
 
 <title>APSTA-GE: 2003 Intermediate Quantitative Methods</title>
 
@@ -2943,7 +2943,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">APSTA-GE: 2003 Intermediate Quantitative Methods</h1>
 <h3 class="subtitle">Group Exercise Sample Solution</h3>
-<h4 class="date">26 October 2020</h4>
+<h4 class="date">27 October 2020</h4>
 
 </div>
 
@@ -3253,14 +3253,25 @@ SE(5 \times \hat\beta_1) &amp; = \sqrt{Var(5 \times \hat\beta_1)} \\
 <h4>6b</h4>
 <p>Use lm.beta to estimate the standardized regression coefficients.</p>
 <p><strong>Answer:</strong></p>
-<div class="sourceCode" id="cb55"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb55-1"><a href="#cb55-1"></a><span class="kw">lm.beta</span>(lm_Q6)</span></code></pre></div>
+<div class="sourceCode" id="cb55"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb55-1"><a href="#cb55-1"></a><span class="kw">summary</span>(<span class="kw">lm.beta</span>(lm_Q6))</span></code></pre></div>
 <pre><code>## 
 ## Call:
 ## lm(formula = std_lungCap ~ std_age, data = dat)
 ## 
-## Standardized Coefficients::
-## (Intercept)     std_age 
-##   0.0000000   0.1278555</code></pre>
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -2.3277 -0.8107  0.1727  0.8329  2.3819 
+## 
+## Coefficients:
+##             Estimate Standardized Std. Error t value Pr(&gt;|t|)    
+## (Intercept)  11.9715       0.0000     0.4093  29.252   &lt;2e-16 ***
+## std_age       0.1279       0.1279     0.1123   1.139    0.258    
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 0.9981 on 78 degrees of freedom
+## Multiple R-squared:  0.01635,    Adjusted R-squared:  0.003736 
+## F-statistic: 1.296 on 1 and 78 DF,  p-value: 0.2584</code></pre>
 <p><br></p>
 </div>
 <div id="c-2" class="section level4">

@@ -424,7 +424,7 @@ Use lm.beta to estimate the standardized regression coefficients.
 **Answer:**
 
 ```{r Q6b}
-lm.beta(lm_Q6)
+summary(lm.beta(lm_Q6))
 ```
 
 <br>

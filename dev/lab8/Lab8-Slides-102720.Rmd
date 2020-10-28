@@ -1,0 +1,337 @@
+---
+title: "APSTA-GE 2003: Intermediate Quantitative Methods"
+subtitle: "Lab Section 003, Week 8"
+institute: "New York University"
+date: "10/27/2020"
+output:
+  xaringan::moon_reader:
+    css: ["styles.css", "styles-font.css"]
+    self_contained: TRUE
+    seal: TRUE
+    lib_dir: libs
+    nature:
+      ratio: '16:10'
+      highlightStyle: github
+      highlightLines: TRUE
+      countIncrementalSlides: FALSE
+---
+
+```{r setup, include=FALSE}
+# Author: Tong Jin
+# Date created: 10/27/2020
+# Date modified: 10/27/2020
+
+knitr::opts_chunk$set(
+  echo = FALSE, 
+  message=FALSE, 
+  warning=FALSE, 
+  fig.height = 6,
+  fig.width = 10
+)
+
+# Dependencies
+library(plotly)
+library(datarium)
+library(dplyr)
+library(DT)
+library(grid)
+library(gridExtra)
+
+set.seed(1111)
+```
+
+## Reminders
+  
+- **Assignment 4**
+
+  - Due: **10/28/2020 11:55pm (EST)**
+  - Updated Shiny App: [https://tongj.shinyapps.io/2003iqm](https://tongj.shinyapps.io/2003iqm)
+  
+- **Assignment 5**
+
+  - Due: **11/06/2020 11:55pm (EST)**
+  
+- Office hours
+
+  - Monday 9 - 10am (EST)
+  - Wednesday 12:30 - 1:30pm (EST)
+  - Additional time slots available
+    - Sign-up sheet [HERE](https://docs.google.com/spreadsheets/d/1YY38yj8uCNIm1E7jaI9TJC494Pye2-Blq9eSK_eh6tI/edit?usp=sharing)
+  
+- Office hour Zoom link
+  - https://nyu.zoom.us/j/97347070628 (pin: 2003)
+  
+- Office hour notes
+  - Available on NYU Classes
+
+---
+
+## Today's Topics
+
+- Review on Multiple Regression
+    
+- Multiple Regression Analysis
+
+---
+class: inverse, center, middle
+
+# Review on Multiple Regression
+
+---
+
+## Multiple Regression
+
+- Linear: straight line
+
+$$Y_i = X_i + \varepsilon$$
+
+- Multiple linear regression:
+    - A linear regression with two or more independent variables
+- Types of multiple linear regression:
+    - Additive
+    - Interaction
+
+---
+
+## Additive 
+
+**Additive model equation: **
+
+$$Y_i = \beta_0 + \beta_1 \cdot X_{i1} + \beta_2 \cdot X_{i2} + ... + \beta_n \cdot X_{ik} + \varepsilon_i, \ \ \ i = 1, ..., n$$
+
+It can also be written as:
+
+$$\mathcal{Y_i} = \beta_0 + \mathcal{X} + \varepsilon_i$$
+
+$$\mathcal{X} = \beta_1 \cdot X_{i1} + \beta_2 \cdot X_{i2} + ... + \beta_n \cdot X_{ik}$$
+
+This reveals an additive relation: 
+- slopes are independent
+- regression lines are parallel
+
+---
+
+## Demo 1: Additive
+
+```{r load-data-additive, echo=TRUE}
+dat1 <- read.csv("lung_capacity0.csv")
+dplyr::glimpse(dat1)
+```
+
+```{r demo-add-1, echo=TRUE}
+summary(mod1 <- lm(LungCapacitycc ~ Age + Smoker, data = dat1))$coefficients
+```
+
+$$\text{Lung Capacity} = 5455.194 + 2.004 \cdot \text{Age} - 596.343 \cdot \text{Smoker} + \varepsilon$$
+
+---
+
+## Demo 1: Additive (Continued)
+
+```{r demo-add-2, echo=TRUE}
+summary(mod1)$coefficients["Smoker", ]
+```
+
+```{r demo-add-3}
+dat1$Smoker <- as.factor(dat1$Smoker)
+p <- ggplot(dat1, aes(x = Age, y = LungCapacitycc, col = Smoker)) + 
+  geom_point() + 
+  geom_smooth(method = "lm", se = FALSE) +
+  theme_minimal()
+ggplotly(p)
+```
+
+---
+
+## Interaction
+
+**Interaction model equation: **
+
+With two independent variables:
+
+$$Y_i = \beta_0 + \beta_1 \cdot X_{i1} + \beta_2 \cdot X_{i2} + \beta_3 \cdot X_{i1} X_{i2} + \varepsilon_i, \ \ \ i = 1, ..., n$$
+
+With three independent variables:
+
+$$Y_i = \beta_0 + \beta_1 \cdot X_{i1} + \beta_2 \cdot X_{i2} + \beta_3 \cdot X_{i3} + \\ \beta_4 \cdot X_{i1} X_{i2} + \beta_5 \cdot X_{i2} X_{i3} + \beta_6 \cdot X_{i1} X_{i3} + \varepsilon_i, \ \ \ i = 1, ..., n$$
+
+This reveals an interactive relation: 
+- slopes are related
+- regression lines are non-parallel
+
+---
+
+## Demo 2: Interaction
+
+[Stress Data](https://rdrr.io/cran/datarium/man/stress.html)
+
+```{r load, echo=TRUE}
+dat2 <- datarium::stress #<<
+dplyr::glimpse(dat2)
+```
+
+```{r demo-additive-1, echo=TRUE}
+summary(mod1 <- lm(score ~ treatment + exercise + age, data = dat2))$coefficients
+```
+
+---
+
+## Demo 2: Interaction (Continued)
+
+```{r demo-additive}
+p1 <- ggplot(dat2, aes(x = age, y = score, col = treatment)) + 
+  geom_point() + 
+  geom_smooth(method = "lm", se = FALSE) +
+  theme_minimal()
+ggplotly(p1)
+```
+
+---
+class: inverse, center, middle
+
+# Multiple Regression Analysis
+
+---
+
+## The data
+
+[Marketing](https://rdrr.io/cran/datarium/man/marketing.html)
+
+A data frame containing the impact of three advertising medias (youtube, facebook and newspaper) on sales. Data are the advertising budget in thousands of dollars along with the sales. The advertising experiment has been repeated 200 times.
+
+```{r load-data, echo=TRUE}
+dat3 <- datarium::marketing #<<
+dplyr::glimpse(dat3)
+```
+
+---
+
+## Fit an additive model
+
+Fit an additive regression model using `sales` as dependent variable, and `youtube`as the predictor. 
+
+--
+
+```{r}
+mod_add0 <- lm(sales ~ youtube, data = dat3)
+summary(mod_add0)
+```
+
+---
+
+## Summary: additive model
+
+```{r summary-add0, echo=TRUE}
+summary(mod_add0)$coefficients
+```
+
+--
+
+$$\text{sales} = 8.439 + 0.048 \cdot \text{youtube} + \varepsilon$$
+
+---
+
+## Fit another additive model
+
+Fit another additive regression model using `sales` as dependent variable, and `youtube` and `facebook` as predictors. 
+
+--
+
+```{r fit-add0, echo=TRUE}
+mod_add1 <- lm(sales ~ youtube + facebook, data = dat3)
+summary(mod_add1)
+```
+
+---
+
+## Summary: additive model
+
+```{r summary-add1, echo=TRUE}
+summary(mod_add1)$coefficients
+```
+
+--
+
+$$\text{sales} = 3.505 + 0.046 \cdot \text{youtube} + 0.188 \cdot \text{facebook} + \varepsilon$$
+---
+
+## Visualize: additive model
+
+```{r summary-add-viz}
+p <- ggplot(dat3, aes(x = youtube, y = sales, color = facebook)) + 
+  geom_point() + 
+  geom_smooth(method = "lm", se = FALSE) + 
+  theme_minimal()
+ggplotly(p)
+```
+
+---
+
+## Fit one more additive model
+
+Fit another additive regression model using `sales` as dependent variable, and `youtube`, `facebook`, and `newspaper` as predictors. 
+
+--
+
+```{r fit-add2, echo=TRUE}
+mod_add2 <- lm(sales ~ youtube + facebook + newspaper, data = dat3)
+summary(mod_add2)
+```
+
+---
+
+## Summary: additive model
+
+```{r summary-add2, echo=TRUE}
+summary(mod_add2)$coefficients
+```
+
+--
+
+$$\text{sales} = 3.527 + 0.046 \cdot \text{youtube} + 0.189 \cdot \text{facebook} - 0.001 \cdot \text{newspaper} + \varepsilon$$
+
+---
+
+## Fit an interactive model
+
+Fit an interactive regression model using `sales` as dependent variable, and `youtube` and `facebook` as predictors. 
+
+```{r}
+mod_int0 <- lm(sales ~ youtube * facebook, data = dat3)
+summary(mod_int0)
+```
+
+---
+
+## Summary: interactive model
+
+```{r}
+summary(mod_int0)$coefficients
+```
+
+$$\text{sales} = 8.100 + 0.019 \cdot \text{youtube} + 0.289 \cdot \text{facebook} + 0.001 \cdot \text{youtube} \times \text{facebook}$$
+
+---
+
+## Visualize: interactive model
+
+```{r, echo=TRUE}
+p <- ggplot(dat3, aes(x = youtube, y = sales, color = facebook)) + 
+  geom_point() + 
+  geom_smooth(method = "lm", se = FALSE, data = dat3[dat3$facebook > 25, ]) + 
+  geom_smooth(method = "lm", se = FALSE, data = dat3[dat3$facebook <= 25, ]) + 
+  theme_minimal()
+ggplotly(p)
+```
+
+---
+
+## Contact
+
+Tong Jin
+
+- Email: tj1061@nyu.edu
+- Office Hours
+  - Mondays, 9 - 10am (EST)
+  - Wednesdays, 12:30 - 1:30pm (EST)
+

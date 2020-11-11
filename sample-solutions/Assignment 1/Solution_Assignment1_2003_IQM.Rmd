@@ -142,9 +142,11 @@ cat(paste("",  "A: ", rd(n_lung_smo),   "\n",
                "C: ", rd(var_lung_smo), "\n", 
                "D: ", rd(se_lung_smo),  "\n",
                "E: ", rd(n_lung_non),   "\n",
-               "F: ", rd(avg_lung_smo), "\n",
-               "G: ", rd(var_lung_smo), "\n",
-               "H: ", rd(se_lung_smo)         ))
+               "F: ", rd(avg_lung_non), "\n",
+               "G: ", rd(var_lung_non), "\n",
+               "H: ", rd(se_lung_non)
+    )
+)
 ```
 
 <br>
@@ -175,7 +177,7 @@ Conduct a Levene’s test to determine whether a two-sample T-test with equal va
 leveneTest(LungCapacitycc ~ factor(Smoker), data = dat)
 ```
 
-Here, we need to first convert the dummy variable `Smoker` to factorial using `factor(Smoker)`. Then, we pass it to the `leveneTest()` to test equal variance. 
+Here, we need to first convert the dummy variable `Smoker` to factor using `factor(Smoker)`. Then, we pass it to the `leveneTest()` to test equal variance. 
 
 Null hypothesis ($H_0$): two groups have equal variance.
 
@@ -215,12 +217,10 @@ rd(avg_lung_non - avg_lung_smo)
 The sample difference in mean lung capacity between smokers and non-smokers (non-smokers - smokers) is 601.3.
 
 ```{r Q6-t-test}
-group_smo <- dat$LungCapacitycc[dat$Smoker == 1]
-group_non <- dat$LungCapacitycc[dat$Smoker == 0]
-t.test(group_smo, group_non, var.equal = TRUE)
+t.test(LungCapacitycc ~ Smoker, data = dat, var.equal = TRUE)
 ```
 
-According to the two sample t test, the test statistic (t score) of the test is `r rd(-8.8498)`.
+According to the two sample t test, the test statistic (t score) of the test is `r rd(8.8498)`.
 
 The p-value is 0.
 

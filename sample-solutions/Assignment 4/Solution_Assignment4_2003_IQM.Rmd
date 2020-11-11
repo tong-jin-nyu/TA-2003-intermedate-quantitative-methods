@@ -31,7 +31,7 @@ knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 
 In this part, you will conduct some simulation exercises using the Shiny App. 
 
-https://tongj.shinyapps.io/2003iqm/
+https://a3sr-2003-iqm.shinyapps.io/2003iqm/
 
 <br>
 
@@ -252,7 +252,7 @@ When model variance increases, the SE of beta also increases.
 
 ### Answer: Q9
 
-This is false. Model variance measures model complexity. The higher the complexity, the higher the variance, the lower the standard error of coefficient estimation. 
+This is true. When model variance increases, it captures more random noise from the data and, therefore, the coefficients have a higher standard error. 
 
 <br>
 

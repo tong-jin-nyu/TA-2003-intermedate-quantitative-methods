@@ -1,0 +1,442 @@
+---
+title: "APSTA-GE 2003: Intermediate Quantitative Methods"
+subtitle: "Sample Solution - Assignment 1"
+output:
+  pdf_document:
+    latex_engine: xelatex
+    highlight: tango
+geometry: margin=1in
+header-includes:
+   - \usepackage{amsmath,amsthm}
+   - \usepackage{amssymb}
+mainfont: Helvetica
+sansfont: Times New Roman
+monofont: Hack
+fontsize: 10pt
+---
+
+**Created on:** 11/09/2020
+
+**Modified on:** `r format(Sys.time(), '%m/%d/%Y')`
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+
+# Author: Tong Jin
+# Affiliation: New York University
+# Contact: tj1061@nyu.edu
+```
+
+```{r dependencies}
+# Dependencies -----------------------------------------------------------------
+library(car)
+```
+
+
+## Instructions
+
+In this part, you will conduct a simple linear regression analysis using the `lung capacity` data set. The dataset is available in `.csv` format, you will need to import the data into R using the function: `read.csv()`.
+
+The dataset, `lung_capacity0.csv`, is in the data folder. Remember to setup correct working directory before importing the data set into R.
+
+```{r load data}
+dat <- read.csv("../data/lung_capacity0.csv")
+
+# Check the structure of `dat`
+str(dat)
+```
+
+First, load the dataset to R using `read.csv()` as shown above. Then, check dimensions and the structure:
+
+`dat` has 80 rows and 6 columns: 
+
+- `Sex`: Biological sex, binary, 1 as *male*, 0 as *female*
+- `Height`: Height, numeric
+- `Smoker`: Smoking status, binary, 1 as *smoker*, 0 as *non-smoker*
+- `Exercise`: Number of hours for exercise per week, numeric
+- `Age`: Age, numeric
+- `LungCapacitycc`: Lung capacity in cc, numeric
+
+\newpage
+
+## Question 1
+
+Report the sample size for this dataset. 
+
+### Answer: Q1
+
+```{r Q1}
+nrow(dat)
+```
+
+There are 80 sample points.
+  
+<br>
+
+## Question 2
+
+For each variable in the dataset, indicate whether it is numerical/quantitative or categorical.
+
+Tip: please look at the values each variable takes. 
+
+A. Categorical
+
+B. Numerical/Quantitative
+
+### Answer: Q2
+
+Sex: A. Categorical
+
+Height: B. Numerical/Quantitative
+
+Smoker: A. Categorical
+
+Exercise: B. Numerical/Quantitative
+
+Age: B. Numerical/Quantitative
+
+LungCapacitycc: B. Numerical/Quantitative
+
+<br>
+
+## Question 3
+
+Fill out the following summary statistics for lung capacity of smokers and non-smokers (round to the nearest whole number).
+
+Note: for this part, you may assume that 0 corresponds to non-smoker and 1 corresponds to smoker.
+
+|           | N | mean | variance | SE |
+|-----------|---|------|----------|----|
+|smokers    | A | B    | C        | D  |
+|nonsmokers | E | F    | G        | H  |
+
+### Answer: Q3
+
+```{r Q3}
+# Create a function to perform rounding to the nearest whole number
+rd <- function (n) {
+  round(n, digits = 0)
+}
+# Alternative, you can use the round() function directly
+# round(3.14, digits = 0)
+
+# Smoker = 1; non-smoker = 0
+# N
+n_lung_smo <- nrow(dat[dat$Smoker == 1, ])
+n_lung_non <- nrow(dat[dat$Smoker == 0, ])
+
+# mean
+avg_lung_smo <- mean(dat$LungCapacitycc[dat$Smoker == 1])
+avg_lung_non <- mean(dat$LungCapacitycc[dat$Smoker == 0])
+
+# Variance
+var_lung_smo <- var(dat$LungCapacitycc[dat$Smoker == 1])
+var_lung_non <- var(dat$LungCapacitycc[dat$Smoker == 0])
+
+# SE
+se_lung_smo <- sqrt(var_lung_smo / n_lung_smo)
+se_lung_non <- sqrt(var_lung_non / n_lung_non)
+
+cat(paste("",  "A: ", rd(n_lung_smo),   "\n",
+               "B: ", rd(avg_lung_smo), "\n", 
+               "C: ", rd(var_lung_smo), "\n", 
+               "D: ", rd(se_lung_smo),  "\n",
+               "E: ", rd(n_lung_non),   "\n",
+               "F: ", rd(avg_lung_smo), "\n",
+               "G: ", rd(var_lung_smo), "\n",
+               "H: ", rd(se_lung_smo)         ))
+```
+
+<br>
+
+## Question 4
+
+Do smokers and non-smokers have the same lung capacity?
+
+Translate this research question into null and alternative hypotheses that can be tested using a two sample T-test.
+
+### Answer: Q4
+
+Research question: do smokers and non-smokers have equal lung capacity?
+
+Null hypothesis ($H_0$): mean lung capacity for smokers is the **same** as non-smokers.
+
+Alternative hypothesis ($H_1$): mean lung capacity for smokers is **different** from non-smokers.
+
+<br>
+
+## Question 5
+
+Conduct a Levene’s test to determine whether a two-sample T-test with equal variance or unequal variance should be used.
+
+### Answer: Q5
+
+```{r Q5}
+leveneTest(LungCapacitycc ~ factor(Smoker), data = dat)
+```
+
+Here, we need to first convert the dummy variable `Smoker` to factorial using `factor(Smoker)`. Then, we pass it to the `leveneTest()` to test equal variance. 
+
+Null hypothesis ($H_0$): two groups have equal variance.
+
+Alternative hypothesis ($H_1$): two groups have different variances.
+
+The F-value measures the distance of our sample from the null hypothesis (F-value = 0). The p-value, `Pr(>F)`, measures the probability of accepting the null. Since the p-value is larger than 0.05, we cannot reject the null. This indicates that two groups have equal variance.
+
+<br>
+
+## Question 6
+
+For this question, round all answers to the nearest tenth (i.e., one decimal place).
+
+Run a two sample T-test comparing lung capacity of smokers vs. non-smokers.
+
+The sample difference in mean lung capacity between smokers and non-smokers (non-smokers - smokers) is: ____
+
+According to the two sample t test, the test statistic (t score) of the test is: ____
+
+The p-value of this test is: ____
+
+### Answer: Q6
+
+```{r Q6-preset}
+# Update our round function to perform rounding to the nearest tenth
+rd <- function (n) {
+  round(as.numeric(n), digits = 1)
+}
+# Alternative, you can use the round() function directly
+# round(3.14, digits = 1)
+```
+
+```{r Q6-mean-diff}
+rd(avg_lung_non - avg_lung_smo)
+```
+
+The sample difference in mean lung capacity between smokers and non-smokers (non-smokers - smokers) is 601.3.
+
+```{r Q6-t-test}
+group_smo <- dat$LungCapacitycc[dat$Smoker == 1]
+group_non <- dat$LungCapacitycc[dat$Smoker == 0]
+t.test(group_smo, group_non, var.equal = TRUE)
+```
+
+According to the two sample t test, the test statistic (t score) of the test is `r rd(-8.8498)`.
+
+The p-value is 0.
+
+<br> 
+
+## Question 7
+
+There is a statistically significant association between smoking status and lung capacity.
+
+### Answer: Q7
+
+This is true because the p-value of our T-test is smaller than 0.05. With more than 95% of confidence, we reject the null hypothesis. There is a statistically significant association between smoking status and lung capacity.
+
+<br>
+
+## Question 8
+
+Run a regression using lung capacity as the dependent variable (DV) and smoker as the independent variable (IV). Answer the following true or false question.
+
+The intercept of the regression corresponds to mean lung capacity among non-smokers, and slope corresponds to the difference in mean lung capacity between smokers and non-smokers.
+
+### Answer: Q8
+
+```{r Q8}
+mod_Q8 <- lm(LungCapacitycc ~ Smoker, data = dat)
+summary(mod_Q8)
+```
+
+This is true.
+
+<br>
+
+## Question 9
+
+Run a second regression using lung capacity as the DV and height as the IV.
+
+Note: height is given in inches in this dataset. Round to the nearest tenth. 
+
+Report the intercept: ____
+
+Report the slope: ____
+
+### Answer: Q9
+
+```{r Q9}
+mod_Q9 <- lm(LungCapacitycc ~ Height, data = dat)
+summary(mod_Q9)
+
+intercept_mod_Q9 <- coefficients(mod_Q9)["(Intercept)"]
+slope_mod_Q9 <- coefficients(mod_Q9)["Height"]
+```
+
+The intercept: `r rd(intercept_mod_Q9)`.
+
+The slope: `r rd(slope_mod_Q9)`. 
+
+<br>
+
+## Question 10
+
+Write a one sentence interpretation of the slope coefficient that you reported in the previous question.
+
+### Answer: Q10
+
+For two groups of people whose average height differs by one inch, we expect the taller group to have lung capacity that is 88.8 cc higher on average.
+
+<br>
+
+## Question 11
+
+Create a new variable, `height0`, by centering height:
+
+`height0 = height - sample mean height`
+
+Note: variable "`height0`" records each subject's height difference from the mean height.
+
+Run a third regression using lung capacity as the DV and `height0` as the IV. Answer the following true or false question.
+
+The intercept of this regression corresponds to the mean lung capacity for those whose height is at the sample mean height.
+
+### Answer: Q11
+
+```{r Q11}
+dat$height0 <- dat$Height - mean(dat$Height)
+mod_Q11 <- lm(LungCapacitycc ~ height0, data = dat)
+summary(mod_Q11)
+```
+
+This is true.
+
+<br>
+
+## Question 12
+
+The slope coefficients of the second and third regressions are the same because centering the IV does not change the effect of IV on the DV. It only affects the intercept of the regression line.
+
+```{r Q12}
+coefficients(mod_Q9)
+coefficients(mod_Q11)
+```
+
+This is true.
+
+<br>
+
+## Question 13
+
+Create a new variable, `height1`, where
+
+`height1 = height0 / SD(height0)`
+
+Note: variable "`height1`" now records the height difference from mean height in terms of standard deviation of height.
+
+Then, re-run the regression with lung capacity as the DV and `height1` as the IV. Report the intercept and slope of this regression (round to the nearest tenth):
+
+Intercept: ____
+
+Slope: ____
+
+### Answer: Q13
+
+```{r Q13}
+dat$height1 <- dat$height0 / sd(dat$height0)
+mod_Q13 <- lm(LungCapacitycc ~ height1, data = dat)
+summary(mod_Q13)
+
+intercept_mod_Q13 <- coefficients(mod_Q13)["(Intercept)"]
+slope_mod_Q13 <- coefficients(mod_Q13)["height1"]
+```
+
+The intercept is `r rd(intercept_mod_Q13)`. 
+
+The slope is `r rd(slope_mod_Q13)`.
+
+<br>
+
+## Question 14
+
+For the regression above (using `height1` as the IV and lung capacity as the DV), the slope coefficient represents the expected difference in average lung capacity for two groups of people whose average height differs by ____.
+
+### Answer: Q14
+
+Since `height1` is the standardized `Height`, the measurement unit of the slope coefficient will then be **one standard deviation**.
+
+<br>
+
+## Question 15
+
+For the regression above (using `height1`), the intercept of this regression is the same as that from the regression using `height0` because it represents the expected mean lung capacity of people with average height in this dataset.
+
+### Answer: Q15
+
+```{r Q15}
+coefficients(mod_Q11)
+coefficients(mod_Q13)
+```
+
+This is true.
+
+<br>
+
+## Question 16
+
+Create a new variable, `height2`, that measures subjects centered height (`height0`) in the unit of "centimeter".  
+
+Variable "`height2`" now measures how much each subject's height is different from the mean height in the unit of centimeter. 
+
+Then, re-run the regression with lung capacity as the DV and `height2` as the IV.
+
+**Hint:** 1 inch = 2.54 centimeter, hence `height2 = height0 * 2.54.`
+
+Report the intercept and the slope of this regression (round to the nearest tenth):
+
+Intercept: ____
+Slope: ____
+
+### Answer: Q16
+
+```{r Q16}
+dat$height2 <- dat$height0 * 2.54
+mod_Q16 <- lm(LungCapacitycc ~ height2, data = dat)
+summary(mod_Q16)
+
+intercept_mod_Q16 <- coefficients(mod_Q16)["(Intercept)"]
+slope_mod_Q16 <- coefficients(mod_Q16)["height2"]
+```
+
+The intercept is `r rd(intercept_mod_Q16)`. 
+
+The slope is `r rd(slope_mod_Q16)`.
+
+<br>
+
+## Question 17
+
+For the regression above (using `height2` as the IV and lung capacity as the DV), the intercept of this regression is the same as that from the regression using `height0` because it represents the expected mean lung capacity of people with average height in this dataset.
+
+### Answer: Q17
+
+```{r Q17}
+coefficients(mod_Q11)
+coefficients(mod_Q16)
+```
+
+This is true.
+
+<br>
+
+## Question 18
+
+For the regression above (using `height2`), the slope coefficient represents the expected difference in average lung capacity for two groups of people whose average height differs by _______.
+
+### Answer: Q18
+
+Refer to Question 16. The measurement unit of `height2` is **centimeter**. 
+
+---- 
+**END:** Sample Solution - Assignment 1
+----

@@ -1,0 +1,328 @@
+---
+title: "APSTA-GE 2003: Intermediate Quantitative Methods"
+subtitle: "Lab Section 003, Week 11"
+institute: "New York University"
+date: "11/17/2020"
+output:
+  xaringan::moon_reader:
+    css: ["styles.css", "styles-font.css"]
+    self_contained: TRUE
+    seal: TRUE
+    lib_dir: libs
+    nature:
+      ratio: '16:10'
+      highlightStyle: github
+      highlightLines: TRUE
+      countIncrementalSlides: FALSE
+---
+
+```{r setup, include=FALSE}
+# Author: Tong Jin
+# Date created: 11/03/2020
+# Date modified: 11/03/2020
+
+knitr::opts_chunk$set(
+  echo = TRUE, 
+  message=FALSE, 
+  warning=FALSE, 
+  fig.height = 6,
+  fig.width = 10
+)
+
+# Dependencies
+library(plotly)
+library(dplyr)
+library(DT)
+library(grid)
+library(gridExtra)
+library(stringr)
+library(corrplot)
+```
+
+## Reminders
+  
+- Sample Assignment Solutions Available
+  - In [this Google Drive folder](https://drive.google.com/drive/folders/1b3fHkxC81ov2Sw8uPomXpXHyar2w2eQu?usp=sharing)
+
+- No Assignment Due
+  - <(￣︶￣)>
+- Office hours
+  - Monday 9:00 - 10:00am (EST)
+  - Wednesday 12:30 - 1:30pm (EST)
+  - Additional time slots available
+    - Sign-up sheet [HERE](https://docs.google.com/spreadsheets/d/1YY38yj8uCNIm1E7jaI9TJC494Pye2-Blq9eSK_eh6tI/edit?usp=sharing)
+  
+- Office hour Zoom link [HERE](https://nyu.zoom.us/j/9985119253)
+  
+- Office hour notes
+  - Available on NYU Classes
+
+---
+
+## Today's Topics
+
+- Analyzing NYC Property Sales Data using Multiple Regression Modeling
+
+---
+
+## Introduction
+
+In this lab, we will explore a property market dataset using multiple regression modeling. We will examine how the sale price varied across a 12-month period in 2016 - 2017. Specifically, we will try to understand the covariates that affect the sale price. Our research questions are:
+
+1. How did the sale price of NYC properties vary in 2016 - 2017? 
+
+2. What contributed to the increase of the sale price?
+
+3. How do we predict the sale price based on the columns we have?
+
+## Design
+
+We will conduct an Exploratory Data Analysis (EDA), followed by a multiple regression analysis, to try to answer these questions.
+
+---
+
+## Dataset
+
+The dataset records every building or building unit (apartment, etc.) sold in the New York City property market over a 12-month period in 2016 - 2017. (Source: [Kaggle](https://www.kaggle.com/new-york-city/nyc-property-sales))
+
+The dataset contains the location, address, type, sale price, and sale data of building units sold. 
+
+[Dataset file here](https://drive.google.com/file/d/1JjV_UZW6eCeAuqyTY3yV5W3WZdZ9ve2A/view?usp=sharing)
+
+First, load the data into R: 
+
+```{r load-data}
+dat <- read.csv("../nyc-rolling-sales.csv", header = TRUE, 
+                na.strings = c("NA", " -  ")) #<<
+dim(dat)
+```
+
+Number of observations: 84,548
+
+Number of columns: 22
+
+Column Names: 
+
+```{r dis-column-names}
+colnames(dat)
+```
+
+---
+
+## Codebook - Part 1
+
+(Source: [Glossary of Terms for Property Sales Files - NYC](https://www1.nyc.gov/assets/finance/downloads/pdf/07pdf/glossary_rsf071607.pdf))
+
+- X: integer: index
+- BOROUGH: integer: borough name
+  - 1: Manhattan
+  - 2: Bronx
+  - 3: Brooklyn
+  - 4: Queens
+  - 5: Staten Island
+- NEIGHBORHOOD: character: neighborhood name
+- BUILDING.CLASS.CATEGORY: category: identify similar properties by broad usage (e.g. One Family Homes) without looking up individual Building Classes.
+- TAX.CLASS.AT.PRESENT: category: tax classes
+  - Class 1: residential property of up to three units
+  - Class 2: all other properties that are primarily residential
+  - Class 3: property owned by a gas, telephone or electric company
+  - Class 4: all other commercial properties
+- BLOCK: integer: sub-division of the borough
+- LOT: integer: a tax lot
+- EASE.MENT: logical: easement or not
+- BUILDING.CLASS.AT.PRESENT: category: constructive use
+- ADDRESS: character: address
+- APARTMENT.NUMBER: character: apt. number
+- ZIP.CODE: category: zip code
+- RESIDENTIAL.UNITS: integer: number of residential units
+- COMMERCIAL.UNITS: integer: number of commercial units
+- TOTAL.UNITs: integer: total number of units
+- LAND.SQUARE.FEET: character: land sqft
+- GROSS.SQUARE.FEET: character: gross sqft
+- YEAR.BUILT: integer: year built
+- BUILDING.CLASS.AT.TIME.OF.SALE: category: constructive use
+- SALE.PRICE: character: sale price
+- SALE.DATE: character: sale date
+
+---
+
+## Pre-process
+
+First, make column names to lowercase using the `stringr` package. Then, replace `.` with `_`.
+
+```{r pre}
+colnames(dat) <- str_to_lower(colnames(dat)) #<<
+colnames(dat) <- str_replace_all(colnames(dat), pattern = "[.]", replacement = "_") #<<
+colnames(dat)
+```
+
+---
+
+## Pre-process
+
+- Examine if there is any missing value.
+
+```{r describe}
+n_col <- ncol(dat)
+paste("Column Index", "Number of NAs", sep = ", ")
+for (index in 1:n_col) {
+  print(paste(index, ", ", colnames(dat)[index], ", ", sum(is.na(dat[, index])), sep = ""))
+}
+```
+
+---
+
+## Trim the dataset
+
+Drop unrelated columns. 
+
+```{r trim}
+col_name_to_drop <- c("x", "ease_ment", "neighborhood", 
+                      "building_class_at_present", "tax_class_at_present", 
+                      "address", "apartment_number", "tax_class_at_time_of_sale")
+col_index_to_drop <- which(colnames(dat) %in% col_name_to_drop)
+dat <- dat[, -col_index_to_drop]
+dim(dat)
+```
+
+Drop rows with missing values.
+
+```{r trim1}
+col_name_w_NA <- c("sale_price", "land_square_feet", "gross_square_feet")
+col_index_w_NA <- which(colnames(dat) %in% col_name_w_NA)
+row_w_NA <- which(is.na(dat[, col_index_w_NA[1]]))
+dat <- dat[-row_w_NA, ]
+row_w_NA <- which(is.na(dat[, col_index_w_NA[2]]))
+dat <- dat[-row_w_NA, ]
+row_w_NA <- which(is.na(dat[, col_index_w_NA[3]]))
+dat <- dat[-row_w_NA, ]
+dim(dat)
+table(is.na(dat))
+```
+
+--- 
+
+## Descriptive Analysis
+
+```{r descriptive}
+colnames(dat)
+```
+
+```{r sale-date}
+dat$sale_date <- as.Date(dat$sale_date)
+```
+
+
+---
+
+## Borough
+
+```{r borough}
+p <- ggplot(dat, aes(x = factor(borough))) + 
+  geom_histogram(stat="count") + 
+  scale_x_discrete(labels = c("Man", "Bronx", "Brooklyn", "Queens", "SI")) + 
+  theme_minimal()
+ggplotly(p)
+```
+
+---
+
+## Average Sale Price Per Borough
+
+```{r borough-price}
+average_sales_per_borough <- dat %>% 
+  group_by(borough) %>%
+  summarize(total = n(), average_sales = mean(sale_price))
+average_sales_per_borough
+```
+
+---
+
+## Viz
+
+```{r borough-price-viz}
+p <- ggplot(average_sales_per_borough, aes(x = borough, y = average_sales)) +
+  geom_point() + 
+  scale_x_discrete(labels = c("Man", "Bronx", "Brooklyn", "Queens", "SI")) + 
+  theme_minimal()
+ggplotly(p)
+```
+
+---
+
+## Building Class Category
+
+```{r class}
+building_class_cat <- dat %>%
+  group_by(borough, building_class_category) %>%
+  summarize(total = n()) %>% 
+  arrange(desc(total), borough)
+building_class_cat
+```
+
+---
+
+## Viz
+
+```{r class-viz}
+p <- ggplot(building_class_cat, aes(x = building_class_category, y = total)) +
+  geom_point() + 
+  theme_classic()
+ggplotly(p)
+```
+
+---
+
+## Zip code
+
+```{r zip}
+zip_code <- dat %>%
+  group_by(zip_code) %>%
+  summarize(average_sales = mean(sale_price)) %>%
+  arrange(desc(average_sales))
+zip_code
+```
+
+---
+
+## Viz 
+
+```{r zip-viz}
+p <- ggplot(zip_code, aes(x = factor(zip_code), y = average_sales)) +
+  geom_point() + 
+  theme_classic()
+ggplotly(p)
+```
+
+---
+
+## Other Columns
+
+```{r land-sqft}
+summary(dat$land_square_feet)
+summary(dat$year_built)
+summary(dat$total_units)
+```
+
+---
+
+## Check correlation
+
+```{r actual-corr}
+cor_dat <- cor(dat[, -c(2, 12, 14)])
+corrplot::corrplot(cor_dat, type = "lower") #<<
+```
+
+---
+
+## Let's Build Our Model Together!
+
+## Contact
+
+Tong Jin
+
+- Email: tj1061@nyu.edu
+- Office Hours
+  - Mondays, 9 - 10am (EST)
+  - Wednesdays, 12:30 - 1:30pm (EST)
+

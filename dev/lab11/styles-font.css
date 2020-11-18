@@ -10,12 +10,12 @@ h1, h2, h3 {
     font-weight: normal;
 }
 p {
-    font-size: 14px;
+    font-size: 15px;
 }
 ul {
-    font-size: 14px;
+    font-size: 15px;
 }
 .remark-code, .remark-inline-code { 
     font-family: 'Roboto Mono', 'Lucida Console', Monaco, monospace; 
-    font-size: 12px;
+    font-size: 13px;
 }

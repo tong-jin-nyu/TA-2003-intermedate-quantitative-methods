@@ -37,37 +37,135 @@ library(grid)
 library(gridExtra)
 library(stringr)
 library(corrplot)
+library(MASS)
+library(lmtest)
 ```
 
 ## Reminders
-  
-- Sample Assignment Solutions Available
-  - In [this Google Drive folder](https://drive.google.com/drive/folders/1b3fHkxC81ov2Sw8uPomXpXHyar2w2eQu?usp=sharing)
 
-- No Assignment Due
-  - <(￣︶￣)>
+- Assignment 6
+  - Due: 11/20/2020 (Friday) 11:55 PM
+  - Sample solutions will be available after due
+    - In [this Google Drive folder](https://drive.google.com/drive/folders/1b3fHkxC81ov2Sw8uPomXpXHyar2w2eQu?usp=sharing)
+
 - Office hours
   - Monday 9:00 - 10:00am (EST)
   - Wednesday 12:30 - 1:30pm (EST)
   - Additional time slots available
     - Sign-up sheet [HERE](https://docs.google.com/spreadsheets/d/1YY38yj8uCNIm1E7jaI9TJC494Pye2-Blq9eSK_eh6tI/edit?usp=sharing)
-  
-- Office hour Zoom link [HERE](https://nyu.zoom.us/j/9985119253)
-  
-- Office hour notes
-  - Available on NYU Classes
+  - Office hour Zoom link [HERE](https://nyu.zoom.us/j/9985119253)
 
 ---
 
 ## Today's Topics
 
-- Analyzing NYC Property Sales Data using Multiple Regression Modeling
+- Walk through Assignment 6
+- Model Selection: NYC Property Sales Data
+
+---
+class: inverse, center, middle
+
+# Walk through Assignment 6
+
+---
+
+## Question 4
+
+*Fit a regression assuming a quadratic relationship between income and age by further including a squared age term in the regression model.*
+
+Quadratic Model: 
+
+$$\text{Sales} = \beta_0 + \beta_1 \cdot \text{YouTube} + \beta_2 \cdot \text{YouTube}^2 + \varepsilon$$
+
+where $\beta_0$ is the intercept, $\beta_1$ is the coefficient of YouTube marketing budget, $\beta_2$ is the coefficient of squared YouTube marketing budget, and $\varepsilon$ is the residual.
+
+---
+
+## Question 6
+
+*At what two consecutive ages does the expected change in income (from one age to the next) change signs (i.e, from positive to negative or vice versa) as compared to the prior two consecutive ages?*
+
+- The stationary point of a **concave** curve is the point with maximum y value.
+- The stationary point of a **convex** curve is the point with minimum y value.
+
+Options: 
+
+- eyeball: predict and plot
+- manual calculation: use vertex form
+- get every possible y value: use a loop
+
+---
+
+## Question 10
+
+*Based on the regression of log(income)~age above, we expect average income...*
+
+Logarithm ~ proportional
+
+---
+
+## Part 2 Question 1
+
+*Run a regression model predicting the y variable with x1 (gender) and x2 (group) as predictors (use their appropriate dummy/factor representations).*
+
+A regression model with a quantitative dependent variable and two categorical independent variables.
+
+**For example:** D.V.: test score as `score`. 
+
+I.V.: study team as `team`, biological sex as `sex`.
+
+- `team` has three groups: `A`, `B`, `C`
+  - `team A`: 0
+  - `team B`: 1
+  - `team C`: 2
+- `sex` has two groups: `male`, `female`
+  - `female`: 0
+  - `male`: 1
+
+**Understanding the reference group:**
+
+In the model, we set the coefficient of the reference group as **zero**. In other words, we treat reference groups as constants. Because they are constants, we add them into the intecept.
+
+---
+
+## P2Q1 Demo
+
+```{r dgp-P2Q1}
+set.seed(111)
+dgp <- function (n, beta0, beta1, beta2) {
+  team_groups <- c(0, 1, 2)
+  error <- rnorm(n, mean = 0, sd = 10)
+  team <- factor(sample(team_groups, size = n, replace = TRUE), levels = c(0, 1, 2))
+  sex <- factor(sample(c(0, 1), size = n, replace = TRUE), levels = c(0, 1))
+  score <- beta0 + beta1 * as.numeric(team) + beta2 * as.numeric(sex) + error
+  dat <- data.frame(score, team, sex)
+  summary(lm(score ~ team + sex, data = dat))
+}
+(df <- dgp(n = 100, beta0 = 40, beta1 = 2, beta2 = 1.1))
+```
+
+$$\text{score} = 45.0466 - 2.439 \cdot \text{team}_1 + 0.6065 \cdot  \text{team}_2 + 2.6817 \cdot \text{sex}_{\text{male}}$$
+
+---
+
+## Part 2 Question 4 (Q16)
+
+Q: How to change reference groups? 
+
+A: `relevel()`
+
+---
+class: inverse, center, middle
+
+# Model Selection: NYC Property Sales Data
 
 ---
 
 ## Introduction
 
-In this lab, we will explore a property market dataset using multiple regression modeling. We will examine how the sale price varied across a 12-month period in 2016 - 2017. Specifically, we will try to understand the covariates that affect the sale price. Our research questions are:
+**Purpose:** examine the covariates that affect the sale price.
+
+**Research questions**:
 
 1. How did the sale price of NYC properties vary in 2016 - 2017? 
 
@@ -75,25 +173,10 @@ In this lab, we will explore a property market dataset using multiple regression
 
 3. How do we predict the sale price based on the columns we have?
 
-## Design
-
-We will conduct an Exploratory Data Analysis (EDA), followed by a multiple regression analysis, to try to answer these questions.
-
----
-
-## Dataset
-
-The dataset records every building or building unit (apartment, etc.) sold in the New York City property market over a 12-month period in 2016 - 2017. (Source: [Kaggle](https://www.kaggle.com/new-york-city/nyc-property-sales))
-
-The dataset contains the location, address, type, sale price, and sale data of building units sold. 
-
-[Dataset file here](https://drive.google.com/file/d/1JjV_UZW6eCeAuqyTY3yV5W3WZdZ9ve2A/view?usp=sharing)
-
-First, load the data into R: 
+**Data**: records every building or building unit (apartment, etc.) sold in the New York City property market over a 12-month period in 2016 - 2017. (Source: [Kaggle](https://www.kaggle.com/new-york-city/nyc-property-sales))
 
 ```{r load-data}
-dat <- read.csv("../nyc-rolling-sales.csv", header = TRUE, 
-                na.strings = c("NA", " -  ")) #<<
+dat <- read.csv("../nyc-rolling-sales.csv", header = TRUE, na.strings = c("NA", " -  "))
 dim(dat)
 ```
 
@@ -101,25 +184,14 @@ Number of observations: 84,548
 
 Number of columns: 22
 
-Column Names: 
-
-```{r dis-column-names}
-colnames(dat)
-```
-
 ---
 
-## Codebook - Part 1
+## Codebook
 
 (Source: [Glossary of Terms for Property Sales Files - NYC](https://www1.nyc.gov/assets/finance/downloads/pdf/07pdf/glossary_rsf071607.pdf))
 
 - X: integer: index
 - BOROUGH: integer: borough name
-  - 1: Manhattan
-  - 2: Bronx
-  - 3: Brooklyn
-  - 4: Queens
-  - 5: Staten Island
 - NEIGHBORHOOD: character: neighborhood name
 - BUILDING.CLASS.CATEGORY: category: identify similar properties by broad usage (e.g. One Family Homes) without looking up individual Building Classes.
 - TAX.CLASS.AT.PRESENT: category: tax classes
@@ -141,53 +213,27 @@ colnames(dat)
 - GROSS.SQUARE.FEET: character: gross sqft
 - YEAR.BUILT: integer: year built
 - BUILDING.CLASS.AT.TIME.OF.SALE: category: constructive use
-- SALE.PRICE: character: sale price
+- SALE.PRICE: character: sale price (**Label (Dependent variable)**)
 - SALE.DATE: character: sale date
 
 ---
 
-## Pre-process
+## Pre-process (Done)
 
-First, make column names to lowercase using the `stringr` package. Then, replace `.` with `_`.
+Let's assume we fixed columns names, dropped unrelated columns and rows with missing values.
 
 ```{r pre}
-colnames(dat) <- str_to_lower(colnames(dat)) #<<
-colnames(dat) <- str_replace_all(colnames(dat), pattern = "[.]", replacement = "_") #<<
-colnames(dat)
-```
-
----
-
-## Pre-process
-
-- Examine if there is any missing value.
-
-```{r describe}
 n_col <- ncol(dat)
-paste("Column Index", "Number of NAs", sep = ", ")
-for (index in 1:n_col) {
-  print(paste(index, ", ", colnames(dat)[index], ", ", sum(is.na(dat[, index])), sep = ""))
-}
-```
-
----
-
-## Trim the dataset
-
-Drop unrelated columns. 
-
-```{r trim}
+# Fix column names
+colnames(dat) <- str_to_lower(colnames(dat))
+colnames(dat) <- str_replace_all(colnames(dat), pattern = "[.]", replacement = "_")
+# Drop unrelated columns
 col_name_to_drop <- c("x", "ease_ment", "neighborhood", 
                       "building_class_at_present", "tax_class_at_present", 
                       "address", "apartment_number", "tax_class_at_time_of_sale")
 col_index_to_drop <- which(colnames(dat) %in% col_name_to_drop)
 dat <- dat[, -col_index_to_drop]
-dim(dat)
-```
-
-Drop rows with missing values.
-
-```{r trim1}
+# Drop rows with missing values
 col_name_w_NA <- c("sale_price", "land_square_feet", "gross_square_feet")
 col_index_w_NA <- which(colnames(dat) %in% col_name_w_NA)
 row_w_NA <- which(is.na(dat[, col_index_w_NA[1]]))
@@ -196,126 +242,163 @@ row_w_NA <- which(is.na(dat[, col_index_w_NA[2]]))
 dat <- dat[-row_w_NA, ]
 row_w_NA <- which(is.na(dat[, col_index_w_NA[3]]))
 dat <- dat[-row_w_NA, ]
-dim(dat)
-table(is.na(dat))
-```
-
---- 
-
-## Descriptive Analysis
-
-```{r descriptive}
-colnames(dat)
-```
-
-```{r sale-date}
 dat$sale_date <- as.Date(dat$sale_date)
 ```
 
+---
+
+## Remove Extreme Values
+
+It's best practice to remove outliers before fitting regression models.
+
+```{r extreme-value}
+summary(dat$sale_price)
+row_index_to_drop <- which(dat$sale_price > 3000000)
+dat <- dat[-row_index_to_drop, ]
+```
 
 ---
 
-## Borough
+## Visualize sale prices
 
-```{r borough}
-p <- ggplot(dat, aes(x = factor(borough))) + 
-  geom_histogram(stat="count") + 
-  scale_x_discrete(labels = c("Man", "Bronx", "Brooklyn", "Queens", "SI")) + 
+```{r sale-price-viz}
+p <- ggplot(dat, aes(y = sale_price)) + 
+  geom_boxplot() + 
   theme_minimal()
 ggplotly(p)
 ```
 
 ---
 
-## Average Sale Price Per Borough
+## Descriptive Analysis
 
-```{r borough-price}
-average_sales_per_borough <- dat %>% 
-  group_by(borough) %>%
-  summarize(total = n(), average_sales = mean(sale_price))
-average_sales_per_borough
-```
+Dependent variable (Label): `sale_price`
 
----
+Independent variable (Features, predictors):
 
-## Viz
-
-```{r borough-price-viz}
-p <- ggplot(average_sales_per_borough, aes(x = borough, y = average_sales)) +
-  geom_point() + 
-  scale_x_discrete(labels = c("Man", "Bronx", "Brooklyn", "Queens", "SI")) + 
-  theme_minimal()
-ggplotly(p)
-```
-
----
-
-## Building Class Category
-
-```{r class}
-building_class_cat <- dat %>%
-  group_by(borough, building_class_category) %>%
-  summarize(total = n()) %>% 
-  arrange(desc(total), borough)
-building_class_cat
-```
-
----
-
-## Viz
-
-```{r class-viz}
-p <- ggplot(building_class_cat, aes(x = building_class_category, y = total)) +
-  geom_point() + 
-  theme_classic()
-ggplotly(p)
-```
-
----
-
-## Zip code
-
-```{r zip}
-zip_code <- dat %>%
-  group_by(zip_code) %>%
-  summarize(average_sales = mean(sale_price)) %>%
-  arrange(desc(average_sales))
-zip_code
-```
-
----
-
-## Viz 
-
-```{r zip-viz}
-p <- ggplot(zip_code, aes(x = factor(zip_code), y = average_sales)) +
-  geom_point() + 
-  theme_classic()
-ggplotly(p)
-```
-
----
-
-## Other Columns
-
-```{r land-sqft}
-summary(dat$land_square_feet)
-summary(dat$year_built)
-summary(dat$total_units)
+```{r features}
+colnames(dat)[-which(colnames(dat) == "sale_price")]
 ```
 
 ---
 
 ## Check correlation
 
+In real world, it is rare that independent variables are actually **independent**. There are always correlations among IVs.
+
 ```{r actual-corr}
-cor_dat <- cor(dat[, -c(2, 12, 14)])
-corrplot::corrplot(cor_dat, type = "lower") #<<
+index_categorical_columns <- c(2, 12, 14)
+cor_dat <- cor(dat[, -index_categorical_columns])
+corrplot::corrplot(cor_dat, type = "lower")
 ```
 
 ---
 
-## Let's Build Our Model Together!
+## Remove highly-correlated IVs and building classes
+
+The strategy here is to remove highly correlated IVs.
+
+```{r remove-highly-corr}
+col_name_to_drop <- c("residential_units", "commercial_units", "gross_square_feet", 
+                      "building_class_category", "building_class_at_time_of_sale")
+col_index_to_drop <- which(colnames(dat) %in% col_name_to_drop)
+dat <- dat[, -col_index_to_drop]
+```
+
+---
+
+## Get Ready for Modeling
+
+Label: `sale_price`
+
+Features: 
+
+```{r features-ready}
+colnames(dat)[-which(colnames(dat) == "sale_price")]
+```
+
+---
+
+## Baseline Model
+
+Baseline model: **mean average**: 0.54 million
+
+```{r baseline}
+mod_BL <- lm(sale_price ~ 1, data = dat)
+summary(mod_BL)
+```
+
+---
+
+## Full Model
+
+$$
+\begin{aligned}
+\text{sale price} & = 5026000 - 80140 \cdot \text{borough} - 26.2 \cdot \text{block} - 35.66 \cdot \text{lot} - 25.6 \cdot \text{zip code} \\ 
+& - 381.4 \cdot \text{total units} + 764.9 \cdot \text{land sqft} + 55.35 \cdot \text{year built} + 29.31 \cdot \text{sale date}
+\end{aligned}
+$$
+
+```{r full}
+mod_full <- lm(sale_price ~ ., data = dat)
+summary(mod_full)
+```
+
+---
+
+## How to select features?
+
+How to select features = regression model selection = examine **goodness of fit**
+
+Methods: 
+
+1. R-squared
+
+2. Adjust R-squared
+
+3. **Log Likelihood**
+
+4. Akaike information criterion (**AIC**)
+
+5. Bayesian information criterion (BIC)
+
+---
+
+## Likelihood Ratio Test
+
+Likelihood: How likely the model simulate the variance of population data (sample mean is equal to the population mean).
+
+Log likelihood: log of the likelihood. The higher log likelihood, the higher the likelihood.
+
+$$\lambda = \left( 1 + \frac{t^2}{n - 1} \right)^{-\frac{n}{2}}$$
+
+---
+
+## Demo: Log Lik
+
+```{r loglik}
+lrtest(mod_full)
+```
+
+---
+
+## AIC
+
+Akaike information criterion
+
+$$\text{AIC} = 2k - 2ln(L) = 2k + n \cdot ln(\frac{\text{RSS}}{n})$$
+
+where $k$ is the number of estimated parameters and $L$ is the maximum value of the likelihood function for the model.
+
+---
+
+## Step-wise AIC
+
+`stepAIC(mod_full, scope = list(lower = mod_BL, upper = mod_full), direction = "backward")`
+
+`stepAIC(mod_BL, scope = list(lower = mod_BL, upper = mod_full), direction = "forward")`
+
+---
 
 ## Contact
 

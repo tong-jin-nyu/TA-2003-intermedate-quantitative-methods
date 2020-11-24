@@ -1,0 +1,328 @@
+---
+title: "APSTA-GE: 2003 Intermediate Quantitative Methods"
+subtitle: "Birth Weight Exercise Sample Solution"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+output: 
+  html_document:
+    df_print: paged
+    theme: cosmo
+    highlight: haddock
+    number_sections: false
+    toc: true
+    toc_depth: 4
+    toc_float: 
+      collapsed: false
+---
+
+```{r setup, include=FALSE}
+# Created on: 11/23/2020
+# Modified on: 11/23/2020
+# Author: Tong Jin
+# Affiliation: New York University
+# Contact: tj1061@nyu.edu
+
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+## Instructions
+
+In this data analysis project, we will examine various factors that may be associated with baby's birth weight.
+
+## Question 1
+
+Load the dataset `BirthWeight_Study.csv`. Report the sample size and the number of variables.
+
+**Answer: Q1**
+
+```{r Q1}
+dat <- read.csv("../data/BirthWeight_Study.csv")
+
+dim(dat)
+```
+
+Sample size: $70,607$. 
+
+Number of variables: $15$
+
+<br>
+
+## Question 2
+
+Summarize the outcome variable `BirthWeight`.
+
+### Question 2a
+
+What is the unit of birth weight?
+
+**Answer: Q2a**
+
+```{r Q2a}
+range(dat$BirthWeight)
+```
+
+The unit of birth weight is gram.
+
+### Question 2b
+
+Report mean, variance and standard deviation.
+
+**Answer: Q2b**
+
+```{r Q2b}
+mean(dat$BirthWeight)
+var(dat$BirthWeight)
+sd(dat$BirthWeight)
+```
+
+### Question 2c
+
+Plot a histogram of the variable.
+
+**Answer: Q2c**
+
+```{r Q2c}
+hist(dat$BirthWeight, xlab = "Birth Weight", ylab = "Count", 
+     breaks = 50, # Set 50 bins
+     main = "Distribution of Baby's Birth Weight - Histogram")
+```
+
+### Question 2d
+
+Check whether there are any obvious outliers.
+
+**Answer: Q2d**
+
+```{r Q2d}
+boxplot(dat$BirthWeight, main = "Distribution of Baby's Birth Weight - Boxplot")
+abline(h = 1750, lty = "dashed", col = "red")
+abline(h = 5450, lty = "dashed", col = "red")
+```
+
+Any birth weight records that are greater than 5450 grams or smaller than 1750 grams should be considered as outliers.
+
+<br>
+
+## Question 3
+
+Take a look at the list of the other variables.
+
+### Question 3a
+
+`Year`: calendar year when the babies were born
+
+`Race`: race of mother (1 = white, 2 = black, 3 = other)
+
+`GestWeek`: gestational weeks
+
+`Age35`: whether mother is older than 35 at the time of child birth
+
+`Smoke`: whether mother smokes
+
+`Ed`: mother’s level of education
+
+`Hyperten`: whether mother has hypertension
+
+`SecondBirth`: whether the baby is first birth (secondbirth = 0 if first birth)
+
+`GestDiabetes`: whether mother has gestational diabetes
+
+`InfantSex`: gender of the baby
+
+`BMI`: mother’s BMI before pregnancy
+
+`WeightGain`: mother’s weight gain during pregnancy
+
+`FatherAge35`: whether father is older than 35 years old
+
+`FatherBMI`: fatherBMI
+
+### Question 3b
+
+Generate summary statistics for each of these variables. Pay attention to variable types.
+
+**Answer: Q3b**
+
+```{r Q3b}
+str(dat)
+```
+
+There are only two numeric variables: `BirthWeight` and `FatherBMI`. All other variables are categorical and are dummy coded. 
+
+We can create a function that generates summary statistics.
+
+```{r Q3b-2}
+generate_summary_statistics <- function(dat, is_num) {
+  # Generate summary statistics of the dataset, output as data frames
+  # Param: dat: the input dataset
+  # Param: is_num: type of output to generate: 
+  #        TRUE for numeric variables; FALSE for categorical.
+  cols <- ncol(dat)
+  summary_num <- list()
+  summary_cat <- list()
+  index <- 1
+  if (is_num) {
+    for (col in 1:cols) {
+      col_type <- class(dat[, col])
+      if (col_type == "numeric") {
+        summary_num[[index]] <- summary(dat[, col])
+        names(summary_num)[index] <- colnames(dat)[col]
+        index <- index + 1
+      }
+    }
+    summary_num
+  } else {
+    for (col in 1:cols) {
+      col_type <- class(dat[, col])
+      if (col_type == "integer") {
+        dat[, col] <- as.factor(dat[, col])
+        summary_cat[[index]] <- table(dat[, col])
+        names(summary_cat)[index] <- colnames(dat)[col]
+        index <- index + 1
+      }
+    }
+    summary_cat
+  }
+}
+```
+
+Let's apply our function.
+
+```{r Q3b-3}
+generate_summary_statistics(dat, is_num = TRUE)
+generate_summary_statistics(dat, is_num = FALSE)
+```
+
+### Question 3c
+
+Which ones of these variables do you think may be related to baby birth weight (how much do you know about determinants of baby's birth weight? A quick wiki check can be helpful)
+
+**Answer: Q3c**
+
+This is an open question. The following variables may be related to baby's birth weight.
+
+`GestWeek`, `Age35`, `Smoke`, `Ed`, `Hyperten`, `SecondBirth`, `GestDiabetes`, `InfantSex`, `BMI`, `WeightGain`.
+
+<br>
+
+## Question 4
+
+Researchers are particularly interested in the racial differences in birth weights. 
+
+### Question 4a
+
+Fit a regression model using `Race` as predictors to compare birth weights across different race. 
+
+**Answer: Q4a**
+
+```{r Q4a}
+dat$Race <- as.factor(dat$Race)
+
+mod_Q4a <- lm(BirthWeight ~ Race, data = dat)
+summary(mod_Q4a)
+```
+
+We now know that `Race` is another variable that related to baby's birth weight.
+
+### Question 4b
+
+How does racial gap change over time? What regression model would you use to answer this question? 
+
+**Answer: Q4b**
+
+We can fit a regression model that uses `Year` and `Race` to predict `BirthWeight`. 
+
+Linear:
+
+$$
+\text{Birth Weight} = \beta_0 + \beta_1 \cdot \text{Race} + \beta_2 \cdot \text{Year} + \varepsilon
+$$
+
+Linear with interactive term: 
+
+$$
+\text{Birth Weight} = \beta_0 + \beta_1 \cdot \text{Race} + \beta_2 \cdot \text{Year} + \beta_3 \cdot \text{Race} \cdot \text{Year} + \varepsilon
+$$
+
+
+<br>
+
+## Question 5
+
+Create a subset of data for 2011. Conduct a more detailed analysis on the associations of various factors with birth weight.
+
+```{r Q5}
+dat_2011 <- subset(dat, Year == 2011)
+```
+
+### Question 5a
+
+Start with the model that only includes race. 
+
+**Answer: Q5a**
+
+```{r Q5a}
+dat_2011$Race <- as.factor(dat_2011$Race)
+mod_Q5a <- lm(BirthWeight ~ Race, data = dat_2011)
+summary(mod_Q5a)
+```
+
+### Question 5b
+
+Include the rest of the variables in the model. Do we need to include "`Year`" to analyze this subset of data? Why or why not? Pay attention to variable types!
+
+**Answer:**
+
+Since this subset is for 2011, we do not need to include `Year` in our model.
+
+```{r Q5b}
+# Convert categorical variables to factor
+cols <- ncol(dat_2011)
+for (col in 1:cols) {
+  if (class(dat_2011[, col]) == "integer") {
+    dat_2011[, col] <- as.factor(dat_2011[, col])
+  }
+}
+```
+
+```{r Q5b-2}
+# Remove column Year
+index_of_col_year <- which(colnames(dat_2011) == "Year")
+dat_2011 <- dat_2011[, -index_of_col_year]
+```
+
+```{r Q5b-3}
+mod_Q5b <- lm(BirthWeight ~ ., data = dat_2011)
+summary(mod_Q5b)
+```
+
+### Question 5c
+
+Compare the race only model with the "big" model, what differences do you notice? What happens to racial gap in birth weight after we control for other variables? Which other variables are significantly associated with Birth weight? Anything surprising? What’s the overall model fit (R squares) of the “big” model? Is it much greater than the “small” model? Which variables contribute most to this change?
+
+**Answer: Q5c**
+
+After fitting the "big" model, we are able to explain part of the residuals in our original "small" model. After controlling other variables, although the coefficient estimates change, the racial gap does not change fundamentally. 
+
+Variables that are significantly associated: 
+
+`GestWeek`, `Smoke`, `Ed`, `SecondBirth`, `GestDiabetes`, `InfantSex`, `WeightGain`.`
+
+Overall model fit of the big model: 
+
+```{r Q5c}
+summary(mod_Q5b)$r.squared
+```
+
+It is much greater than the small model. `GestWeek` contributes the most.
+
+### Question 5d
+
+Do you think the "big" model is the best model that characterizes the relationship between birth weight and other factors? Why and why not? What are other ways that you would like to explore to improve the model fit and model interpretation? 
+
+**Answer:**
+
+This is an open question. We should also fit linear regression models with interactive terms because variables, such as `GestDiabetes` and `WeightGain` might be correlated.
+
+---
+END
+---

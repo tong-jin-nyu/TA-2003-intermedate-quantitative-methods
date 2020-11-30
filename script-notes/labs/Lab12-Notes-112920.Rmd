@@ -1,0 +1,130 @@
+---
+title: "APSTA-GE: 2003 Intermediate Quantitative Methods"
+subtitle: "Lab Section 003, Week 12"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+output: 
+  pdf_document:
+    highlight: kate
+    latex_engine: xelatex
+mainfont: Helvetica
+---
+
+```{r setup, include=FALSE}
+# Created on: 11/24/2020
+# Modified on: 11/29/2020
+# Author: Tong Jin
+# Affiliation: New York University
+# Contact: tj1061@nyu.edu
+
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+
+# Dependencies
+library(stringr)
+library(MASS)
+```
+
+# Introduction {.tabset}
+
+In this lab, we will examine various factors that may be associated with student's math performance. The attached dataset, `student-mat.csv`, is a random sample of student's math scores in secondary education of two Portuguese schools. It was collected by using school reports and quesitonnaires. 
+
+Note: the dataset is in `csv` format with semi-colon as separators. 
+
+```{r load-data}
+dat <- read.csv("student-mat.csv", sep = ";", header = TRUE)
+```
+
+## Dimensions
+
+```{r dim}
+dim(dat)
+table(is.na(dat))
+```
+
+The dataset contains 395 records with 33 columns. No data point is missing.
+
+### Variables
+
+Here is a list of column names.
+
+```{r var}
+as.data.frame(colnames(dat))
+```
+
+### Distributions
+
+Plot distribution of numeric variables.
+
+#### Math Score (Label)
+
+Range: 0 - 20
+
+```{r var-G3-summary}
+summary(dat$G3)
+```
+
+```{r var-G3}
+hist(dat$G3)
+```
+
+## Regression Models
+
+### Baseline models
+
+```{r mod_BL}
+mod_BL <- lm(G3 ~ 1, data = dat)
+summary(mod_BL)
+```
+
+### Y ~ Age
+
+```{r mod_age}
+mod_age <- lm(G3 ~ age, data = dat)
+summary(mod_age)
+```
+
+### Y ~ age + sex
+
+```{r mod_age_sex}
+mod_age_sex <- lm(G3 ~ age + factor(sex), data = dat)
+summary(mod_age_sex)
+```
+
+### Model with All Predictors
+
+```{r mod_full}
+for (col in 1:ncol(dat)) {
+  if (class(dat[, col]) == "character") {
+    dat[, col] <- as.factor(dat[, col])
+  }
+}
+mod_full <- lm(G3 ~ ., data = dat)
+summary(mod_full)
+```
+
+## Model Selection: Step-wise AIC
+
+### Additive Terms Only
+
+Start from the full model. Run stepAIC by going "backward". You can also use the baseline model and go "forward" or use any model and go with "both" directions.
+
+```{r step-AIC}
+stepAIC(mod_full, scope = . ~ 1, direction = "backward")
+```
+
+This is the selected model. It has the lowest AIC score (best prediction performance).
+
+```{r}
+mod_lowest_AIC <- lm(G3 ~ school + age + activities + romantic + famrel + Walc + 
+                     absences + G1 + G2, data = dat)
+summary(mod_lowest_AIC)
+```
+
+### with Interactive Terms
+
+```{r}
+# stepAIC(mod_full, scope = . ~ .^2, direction = "both")
+```
+
+---
+END
+---

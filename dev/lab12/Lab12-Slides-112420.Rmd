@@ -1,0 +1,118 @@
+---
+title: "APSTA-GE 2003: Intermediate Quantitative Methods"
+subtitle: "Lab Section 003, Week 12"
+institute: "New York University"
+date: "11/24/2020"
+output:
+  xaringan::moon_reader:
+    css: ["styles.css", "styles-font.css"]
+    self_contained: TRUE
+    seal: TRUE
+    lib_dir: libs
+    nature:
+      ratio: '16:10'
+      highlightStyle: github
+      highlightLines: TRUE
+      countIncrementalSlides: FALSE
+---
+
+```{r setup, include=FALSE}
+# Author: Tong Jin
+# Date created: 11/24/2020
+# Date modified: 11/24/2020
+
+knitr::opts_chunk$set(
+  echo = TRUE, 
+  message=FALSE, 
+  warning=FALSE, 
+  fig.height = 6,
+  fig.width = 10
+)
+
+# Dependencies
+```
+
+## Reminders
+
+- Assignment 7 ([group project](https://drive.google.com/drive/folders/1S0XC8s6-N4OM4X158DmAWjpxtCl_sVRg?usp=sharing))
+  - [Group assignment](https://docs.google.com/spreadsheets/d/1uZ_ao7dts_wiipddpM9wz_JSYWfBFvcvZ5r6wvqkjTs/edit?usp=sharing)
+  - Due: 12/08/2020 (Friday) 5:00 PM
+  - Sample solutions will be available after due
+
+- Office hours
+  - Monday 9:00 - 10:00am (EST)
+  - Wednesday 12:30 - 1:30pm (EST)
+  - Additional time slots available
+    - Sign-up sheet [HERE](https://docs.google.com/spreadsheets/d/1YY38yj8uCNIm1E7jaI9TJC494Pye2-Blq9eSK_eh6tI/edit?usp=sharing)
+  - Office hour Zoom link [HERE](https://nyu.zoom.us/j/9985119253)
+
+---
+
+## Today's Topics
+
+- Predict student' math scores
+- Model Selection with Step-wise AIC
+
+---
+
+## The dataset
+
+**Student Performance Data Set**
+
+**Source**: 
+
+[Machine Learning Repository, UCI](https://archive.ics.uci.edu/ml/datasets/Student+Performance#)
+
+Paulo Cortez, University of Minho, GuimarÃ£es, Portugal, http://www3.dsi.uminho.pt/pcortez
+
+```{r load-data}
+dat <- read.csv("../student-mat.csv", sep = ";", header = TRUE)
+dim(dat)
+table(is.na(dat))
+```
+
+---
+
+## Variables
+
+```{r colnames}
+colnames(dat)
+```
+
+Label: `G3`
+
+Features: Everything else
+
+---
+
+## Plan
+
+1. EDA
+
+2. Fit regression models
+
+3. Evaluate model bias and variance
+
+---
+
+## Prediction
+
+The goal of prediction using regression is to fit a model that has the lowest AIC score.
+
+---
+
+## Bias-variance tradeoff
+
+[Bias-variance tradeoff](https://en.wikipedia.org/wiki/Bias%E2%80%93variance_tradeoff)
+
+---
+
+## Contact
+
+Tong Jin
+
+- Email: tj1061@nyu.edu
+- Office Hours
+  - Mondays, 9 - 10am (EST)
+  - Wednesdays, 12:30 - 1:30pm (EST)
+

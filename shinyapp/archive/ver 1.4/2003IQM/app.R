@@ -49,9 +49,7 @@ onDate <- function(date) {
 }
 
 # Toggle -----------------------------------------------------------------------
-# Toggle to show/hide solution for group assignment
-group_solution_out <- TRUE  
-group_solution_2_out <- FALSE 
+group_solution_out <- TRUE  # Toggle to show/hide solution for group assignment
 
 # Color palette ----------------------------------------------------------------
 blue <- "#335C81"
@@ -68,9 +66,7 @@ a_zoom_lab2_lisa <- "https://nyu.zoom.us/j/93444830711"
 a_zoom_lab3_tong <- "https://nyu.zoom.us/j/97347070628"
 a_office_hours <- "https://docs.google.com/spreadsheets/d/1YY38yj8uCNIm1E7jaI9TJC494Pye2-Blq9eSK_eh6tI/edit?usp=sharing"
 a_group_assignment <- "https://docs.google.com/document/d/1BkZAa453Hmbe4C4ydLiNTpp78Z6HJfA5vXdD-cEQPA4/edit?usp=sharing"
-a_group_assignment_2 <- "https://drive.google.com/drive/folders/1S0XC8s6-N4OM4X158DmAWjpxtCl_sVRg?usp=sharing"
 a_group_solution <- "https://drive.google.com/drive/folders/1ePk3Tu1TS71LyYz39nJzw09DrrSWpPSA?usp=sharing"
-a_group_solution_2 <- "_"
 a_assignment_solution <- "https://drive.google.com/drive/folders/1b3fHkxC81ov2Sw8uPomXpXHyar2w2eQu?usp=sharing"
 
 # UI ---------------------------------------------------------------
@@ -101,7 +97,7 @@ ui <- navbarPage(  # Create pages with a top level navi bar
           tags$ul(
             tags$li("Instructor: ", a(href=a_ying_lu_nyu, "Ying Lu")),
             tags$li("Teaching Assistant: ", a(href=a_tong_jin_nyu, "Tong Jin")),
-            tags$li("Teaching Assistant: ", a(href=a_lisa_song_nyu, "Lisa Song"))
+            tags$li("Teaching Assistant: ", a(href=a_lisa_song_nyu, "Lisa Song")),
           ),
           p("To send direct emails, click on names.")
         ),
@@ -209,8 +205,11 @@ ui <- navbarPage(  # Create pages with a top level navi bar
             tags$li("Assignment 3", tags$b(onDate("10/19"))),
             tags$li("Assignment 4", tags$b(onDate("10/28"))),
             tags$li("Assignment 5", tags$b(onDate("11/06"))),
-            tags$li("Assignment 6", tags$b(onDate("11/20"))),
-            tags$li("Group Assignment (Birth Weight)", tags$b(onDate("12/08")))
+            tags$li("Assignment 6", tags$b("")),
+            tags$li("Assignment 7", tags$b("")),
+            tags$li("Assignment 8", tags$b("")),
+            tags$li("Assignment 9", tags$b("")),
+            tags$li("Assignment 10", tags$b(""))
           )
         ),
         br(),
@@ -228,15 +227,9 @@ ui <- navbarPage(  # Create pages with a top level navi bar
       tabPanel(title = "Group Assignment", class = "home-navi-assignment-group",
         div(id = "home-navi-assignment-group-info",
           h4("Group Assignment"),
-          h4("Lung Capacity"),
           p(a(href=a_group_assignment, "Questions")),
           if (group_solution_out) {  
             p(a(href=a_group_solution, "Solutions"))
-          },
-          h4("Birth Weight"),
-          p(a(href=a_group_assignment_2, "Questions")),
-          if (group_solution_2_out) {
-            p(a(href=a_group_solution_2, "Solutions"))
           }
         )
       )
@@ -400,7 +393,7 @@ ui <- navbarPage(  # Create pages with a top level navi bar
             tags$li(tags$b("One Sample: "), "Draw one sample and conduct a
                     hypothesis test"),
             tags$li(tags$b("1000 Samples: "), "Draw 1000 samples, conduct a 
-                    hypothesis test for each iteration, and calculate statistics")
+                    hypothesis test for each iteration, and calculate statistics"),
           )
         ),
         br(),

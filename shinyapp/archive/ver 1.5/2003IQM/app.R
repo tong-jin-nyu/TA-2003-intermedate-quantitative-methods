@@ -4,7 +4,7 @@
 # Subtitle: Shiny Course Site
 # 
 # Data Created: 10/14/2020
-# Data Modified: 12/01/2020
+# Data Modified: 10/27/2020
 #
 # ----- ----- Author ----- -----
 #
@@ -30,7 +30,7 @@
 # 3: Hypothesis Testing Tester
 # 
 
-# Dependency -------------------------------------------------------------------
+# Dependency -----------------------------------------------------------------
 library(shiny)
 library(broom)
 library(DT)
@@ -41,11 +41,7 @@ library(MASS)
 library(xtable)
 library(eulerr)
 
-# Shinyapp.io Account ----------------------------------------------------------
-# Account Name: 
-# 'a3sr-2003-iqm'
-
-# Function ---------------------------------------------------------------------
+# Function --------------------------------------------------------------------
 onDate <- function(date) {
   # Input a short date, detect current year and output a due date in long format
   # Param: date: a string in short format (mm/dd)
@@ -434,8 +430,7 @@ ui <- navbarPage(  # Create pages with a top level navi bar
         hr(),
         helpText("Use the slider to change the correlation between X1 and X2"),
         sliderInput(inputId = "corr", 
-          label = "Correlation between X1 and X2: ", 
-          value = 0.1, min = 0, max = 1, step = 0.05
+          label = "Correlation: ", value = 0.1, min = 0, max = 1
         ),
         br(),
         numericInput(inputId = "beta1", label = "X1 Coefficient", value = 1),
@@ -464,13 +459,8 @@ ui <- navbarPage(  # Create pages with a top level navi bar
         h4("Regression Summary"),
         tableOutput("regsummary"),
         h4("Model Sum of Squares"),
-        splitLayout(cellWidths = c("40%", "60%"), 
-                    tableOutput("msstab"), 
-                    plotOutput("piechart")),
-        hr(),
+        plotOutput("venndiag"),
         h3("Sample Many"),
-        h4("Simulation Summary"),
-        tableOutput("simsummary"),
         h4("Distribution of Betas"),
         plotOutput("betasdist")
       ) # <END reg-sim-sidebarLayout-mainPanel>
@@ -528,7 +518,7 @@ server <- function (input, output) {
                lty = "dotted", lwd = 2.5, col = red)
         legend("topright", 
           legend = c("Population", "Sample"), 
-          lty = c(2, 1),
+          lty = c(1, 2),
           col = c(red, blue), 
           title = "Regression Lines")
       }
@@ -860,39 +850,38 @@ server <- function (input, output) {
   ####
   
   Simdata <- eventReactive(input$resample, valueExpr = {
-    data <- mvrnorm(n = input$sampsize, 
-                    mu = c(0, 0),
-                    Sigma = matrix(c(1, input$corr, input$corr, 1), nrow = 2),
-                    empirical = TRUE)
-    X1   <- data[, 1]
-    X2   <- data[, 2]
+    data = mvrnorm(n = input$sampsize, 
+                   mu = c(0, 0),
+                   Sigma = matrix(c(1, input$corr, input$corr, 1), nrow = 2),
+                   empirical = TRUE)
+    X1   = data[, 1]
+    X2   = data[, 2]
     error <- rnorm(input$sampsize, 0, input$sigma2^.5)
-    Y    <- 1 + input$beta1 * X1 + input$beta2 * X2 + error
-    data.frame(X1 = X1, X2 = X2, Y = Y)
+    Y    = 1 + input$beta1 * X1 + input$beta2 * X2 + error
+    return(data.frame(X1 = X1, X2 = X2, Y = Y))
   })
-  simdatafunc = function () { # Identical to `Simdata`
-    data <- mvrnorm(n = input$sampsize, 
-                    mu = c(0, 0),
-                    Sigma = matrix(c(1, input$corr, input$corr, 1), nrow = 2),
-                    empirical = TRUE)
-    X1   <- data[, 1]
-    X2   <- data[, 2]
+  simdatafunc = function () { # Identical to `Simdata``
+    data = mvrnorm(n = input$sampsize, mu = c(0, 0),
+                   Sigma = matrix(c(1, input$corr, input$corr, 1), nrow = 2),
+                   empirical = TRUE)
+    X1 = data[, 1]
+    X2 = data[, 2]
     error <- rnorm(input$sampsize, 0, input$sigma2^.5)
-    Y    <- 1 + input$beta1 * X1 + input$beta2 * X2 + error
+    Y    = 1 + input$beta1 * X1 + input$beta2 * X2 + error
     data.frame(X1 = X1, X2 = X2, Y = Y)
   }
-  calcSS = function (lmobj) {
+  calcMSS = function (lmobj) {
     r2  <- summary(lmobj)$r.squared
     res <- lmobj$residuals
     RSS <- sum(res^2)
     TSS <- (RSS) / (-(r2 - 1))
     MSS <- TSS - RSS
-    data.frame(MSS = MSS, TSS = TSS, RSS = RSS)
+    MSS
   }
   observeEvent(input$resample, {
     simdata <- Simdata()
     output$regsummary <- renderTable({
-      if (input$whichx == "Include X1 Only") {
+      if(input$whichx == "Include X1 Only") {
         lm1 <- lm(Y ~ X1, data = simdata)
         truevals <- c(1, input$beta1)
       } else if (input$whichx == "Include X2 Only") {
@@ -908,152 +897,85 @@ server <- function (input, output) {
       xtable(table)
       }, rownames = TRUE
     ) # <END reg-sim-observeEvent-output-regsummary>
-    output$piechart <- renderPlot({
+    output$venndiag <- renderPlot({
       if (input$whichx == "Include X1 Only") {
         lm1 <- lm(Y ~ X1, data = simdata)
-        MSS <- calcSS(lm1)$MSS
-        RSS <- calcSS(lm1)$RSS
-        slices <- c(MSS, RSS)
-        lbls <- c("MSS","RSS")
-        pie(slices, labels = lbls, main = "TSS Breakdown", 
-            col = c("blue", "red"), radius = 1)
+        MSS <- calcMSS(lm1)
+        fit <- euler(c(MSS = MSS))
+        plot(fit, lab = paste("MSS =", round(MSS)))
       } else if (input$whichx == "Include X2 Only") {
         lm1 <- lm(Y ~ X2, data = simdata)
-        MSS <- calcSS(lm1)$MSS
-        RSS <- calcSS(lm1)$RSS
-        slices <- c(MSS, RSS)
-        lbls <- c("MSS","RSS")
-        pie(slices, labels = lbls, main = "TSS Breakdown", 
-            col = c("blue", "red"), radius = 1)
+        MSS <- calcMSS(lm1)
+        fit <- euler(c(A = MSS))
+        plot(fit, lab = paste("MSS =", round(MSS)))
       } else {
-        lmx1x2 <- lm(Y ~ X1+X2, data = simdata)
-        lmx1 <- lm(Y ~ X1, data = simdata)
-        lmx2 <- lm(Y ~ X2, data = simdata)
-        MSSx1   <- calcSS(lmx1)$MSS
-        MSSx2   <- calcSS(lmx2)$MSS
-        MSSx1x2 <- calcSS(lmx1x2)$MSS
-        RSSx1x2 <- calcSS(lmx1x2)$RSS
-        TSS     <- ceiling(calcSS(lmx1x2)$TSS) 
-        middle  <- MSSx1 + MSSx2 - MSSx1x2
-        if (middle > 0) {
-          slices <- c((MSSx1 - middle), RSSx1x2, (MSSx2 - middle), middle)
-          lbls <- c("MSS X1","RSS", "MSS X2", "MSS X1 & X2")
-          pie(slices, labels = lbls, main = "TSS Breakdown", 
-              col = c("blue", "red", "white", "light blue"), 
-              clockwise = TRUE
-          )
-        } else {
-          middle <- abs(middle)
-          slices <- c(MSSx1, RSSx1x2, MSSx2, middle)
-          lbls <- c("MSS X1","RSS", "MSS X2", "MSS X1 & X2")
-          pie(slices, labels = lbls, main = "TSS Breakdown", 
-              col = c("light green", "red", "light blue", "white"),
-              clockwise = TRUE
-          )
-        }
+        lmx1x2 <- lm(Y ~ X1 + X2, data = simdata)
+        lmx1  <- lm(Y ~ X1, data = simdata)
+        lmx2  <- lm(Y ~ X2, data = simdata)
+        MSSx1 <- calcMSS(lmx1)
+        MSSx2 <- calcMSS(lmx2)
+        MSSx1x2 <- calcMSS(lmx1x2)
+        middle <- MSSx1 + MSSx2 - MSSx1x2
+        fit <- euler(c(A = MSSx1 + 0.05, B = MSSx2 + 0.05, 
+                       "A&B" = round(middle + 0.0001))
+        )
+        plot(fit, labels = c(paste("MSS X1 =", round(MSSx1)),
+                             paste("MSS X2 =", round(MSSx2)),
+                             paste("MSS X1 & X2 =", round(MSSx1x2)))
+        )
       }
-    }) # <END reg-sim-observeEvent-output-piechart>
-    output$msstab <- renderTable({
-      lmx1x2 <- lm(Y ~ X1 + X2, data = simdata)
-      lmx1   <- lm(Y ~ X1, data = simdata)
-      lmx2   <- lm(Y ~ X2, data = simdata)
-      MSSx1  <- calcSS(lmx1)$MSS
-      MSSx2  <- calcSS(lmx2)$MSS
-      MSSx1x2 <- calcSS(lmx1x2)$MSS
-      table <- rbind(c(MSSx1), c(MSSx2), c(MSSx1 + MSSx2), c(MSSx1x2))
-      colnames(table) = c("MSS")
-      rownames(table) = c("x1 only", "x2 only", 
-                          "x1 only + x2 only", "model with x1 and x2")
-      xtable(table)
-      }, rownames=TRUE
-    ) # <END reg-sim-observeEvent-output-msstab>
+    }) # <END reg-sim-observeEvent-output-venndiag>
   }) # <END reg-sim-observeEvent>
   
   observeEvent(input$sampmany, {
-    if (input$whichx == "Include X1 Only") {
-      estb1 <- rep(NA, 500)
-      for (i in 1:500) {
-        simdata2 <- simdatafunc()
-        lm1 <- lm(Y ~ X1, data = simdata2)
-        estb1[i] <- summary(lm1)$coef[2, 1]
-      }
-      minx <- min(c(estb1 - 0.1, input$beta1 - 0.1))
-      maxx <- max(c(estb1 + 0.1, input$beta1 + 0.1))
-      output$betasdist <- renderPlot({
-        hist(estb1, xlab = "beta1", main = "", xlim = c(minx, maxx), breaks = 20)
-        abline(v = mean(estb1), col = 2, lwd = 2, lty = 1)
-        abline(v = input$beta1, col = 4, lwd = 2, lty = 2)
+    output$betasdist <- renderPlot({
+      if (input$whichx == "Include X1 Only") {
+        estb1 <- rep(NA, each = 100)
+        for (i in 1:100) {
+          simdata2 <- simdatafunc()
+          lm1 <- lm(Y ~ X1, data = simdata2)
+          estb1[i] <- summary(lm1)$coefficients[2, 1]
+        }
+        hist(estb1, xlab = "beta1", main = "")
+        abline(v = mean(estb1), col = "red")
+        abline(v = input$beta1, col = "blue")
         legend("topleft", c("True Value", "Sim Mean"), 
-               col = c(4, 2), lty = c(2, 1), lwd = 2)
-      })
-      output$simsummary <- renderTable({
-        table <- cbind(c(input$beta1), c(mean(estb1)), c(sd(estb1)))
-        colnames(table) <- c("True Value", "Sim Mean", "Sim SD")
-        rownames(table) <- c("Beta 1")
-        xtable(table)
-        }, rownames = TRUE
-      )
-    } else if (input$whichx == "Include X2 Only") {
-      estb2 <- rep(NA, 500)
-      for(i in 1:500) {
-        simdata2 <- simdatafunc()
-        lm1 <- lm(Y ~ X2, data = simdata2)
-        estb2[i] <- summary(lm1)$coef[2, 1]
-      }
-      minx <- min(c(estb2 - 0.1, input$beta2 - 0.1))
-      maxx <- max(c(estb2 + 0.1, input$beta2 + 0.1))
-      output$betasdist <- renderPlot({
-        hist(estb2, xlab = "beta2", main = "", xlim = c(minx, maxx), breaks = 20)
-        abline(v = mean(estb2), col = 2, lwd = 2, lty = 1)
-        abline(v = input$beta2, col = 4, lwd = 2, lty = 2)
-        legend("topleft", c("true value", "sim mean"), 
-               col = c(4, 2), lty = c(2, 1), lwd = 2)
-      })
-      output$simsummary <- renderTable({
-        table <- cbind(c(input$beta2), c(mean(estb2)), c(sd(estb2)))
-        colnames(table) <- c("True Value", "Sim Mean", "Sim SD")
-        rownames(table) <- c("Beta 2")
-        xtable(table)
-        }, rownames = TRUE
-      )        
-    } else {
-      estb1 <- rep(NA, 500)
-      estb2 <- rep(NA, 500)
-      for(i in 1:500) {
-        simdata2 <- simdatafunc()
-        lm1 <- lm(Y ~ X1 + X2, data = simdata2)
-        estb1[i] <- summary(lm1)$coef[2, 1]
-        estb2[i] <- summary(lm1)$coef[3, 1]
-      }
-      minx1 <- min(c(estb1 - 0.1, input$beta1 - 0.1))
-      maxx1 <- max(c(estb1 + 0.1, input$beta1 + 0.1))
-      minx2 <- min(c(estb2 - 0.1, input$beta2 - 0.1))
-      maxx2 <- max(c(estb2 + 0.1, input$beta2 + 0.1))
-      output$betasdist <- renderPlot({
-        par(mfrow = c(1, 2))
-        hist(estb1, xlab = "beta1", main = "", xlim = c(minx1, maxx1), breaks = 20)
-        abline(v = mean(estb1), col = 2, lwd = 2, lty = 1)
-        abline(v = input$beta1, col = 4, lwd = 2, lty = 2)
+               col = c("blue", "red"), lty = c(1, 1))
+        } else if (input$whichx == "Include X2 Only") {
+        estb2 <- rep(NA, each = 100)
+        for (i in 1:100) {
+          simdata2 <- simdatafunc()
+          lm1 <- lm(Y ~ X2, data = simdata2)
+          estb2[i] <- summary(lm1)$coefficients[2, 1]
+        }
+        hist(estb2, xlab = "beta2", main = "")
+        abline(v = mean(estb2), col = "red")
+        abline(v = input$beta2, col = "blue")
         legend("topleft", c("True Value", "Sim Mean"), 
-               col = c(4, 2), lty = c(2, 1), cex = 0.7, lwd = 2)
-        hist(estb2, xlab = "beta2", main = "", xlim = c(minx2, maxx2), breaks = 20)
-        abline(v = mean(estb2), col = 2, lwd = 2, lty = 1)
-        abline(v = input$beta2, col = 4, lwd = 2, lty = 2)
+               col = c("blue", "red"), lty = c(1, 1))
+      } else {
+        estb1 <- rep(NA, each = 100)
+        estb2 <- rep(NA, each = 100)
+        for (i in 1:100) {
+          simdata2 <- simdatafunc()
+          lm1 <- lm(Y ~ X1 + X2, data = simdata2)
+          estb1[i] <- summary(lm1)$coefficients[2, 1]
+          estb2[i] <- summary(lm1)$coefficients[3, 1]
+        }
+        par(mfrow=c(1, 2))
+        hist(estb1, xlab = "beta1", main = "")
+        abline(v = mean(estb1), col = "red")
+        abline(v = input$beta1, col = "blue")
         legend("topleft", c("True Value", "Sim Mean"), 
-               col = c(4, 2), lty = c(1, 1), cex = 0.7, lwd = 2)
-      })
-      output$simsummary <- renderTable({
-        table <- cbind(c(input$beta1, input$beta2),
-                       c(mean(estb1), mean(estb2)), 
-                       c(sd(estb1), sd(estb2))
-        )
-        colnames(table) <- c("True Value", "Sim Mean", "Sim SD")
-        rownames(table) <- c("Beta 1", "Beta 2")
-        xtable(table)
-        }, rownames = TRUE
-      )
-    }
-  }) # <END reg-sim-many-observeEvent>
+               col = c("blue", "red"), lty = c(1, 1), cex = 0.7)
+        hist(estb2, xlab = "beta2", main = "")
+        abline(v = mean(estb2), col = "red")
+        abline(v = input$beta2, col = "blue")
+        legend("topleft", c("True Value", "Sim Mean"), 
+               col = c("blue", "red"), lty = c(1, 1), cex = 0.7)
+      }
+    })
+  })
 }
 # <END server>
 

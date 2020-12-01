@@ -1,0 +1,221 @@
+---
+title: "APSTA-GE 2003: Intermediate Quantitative Methods"
+subtitle: "Lab Section 003, Week 13"
+institute: "New York University"
+date: "12/01/2020"
+output:
+  xaringan::moon_reader:
+    css: ["styles.css", "styles-font.css"]
+    self_contained: TRUE
+    seal: TRUE
+    lib_dir: libs
+    nature:
+      ratio: '16:10'
+      highlightStyle: github
+      highlightLines: TRUE
+      countIncrementalSlides: FALSE
+---
+
+```{r setup, include=FALSE}
+# Author: Tong Jin
+# Date created: 12/01/2020
+# Date modified: 12/01/2020
+
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE, 
+                      fig.height = 6,fig.width = 10
+)
+
+# Dependencies
+library(ggplot2)
+library(plotly)
+library(dplyr)
+```
+
+## Reminders
+
+- Assignment 7 ([group project](https://drive.google.com/drive/folders/1S0XC8s6-N4OM4X158DmAWjpxtCl_sVRg?usp=sharing))
+  - [Group assignment](https://docs.google.com/spreadsheets/d/1uZ_ao7dts_wiipddpM9wz_JSYWfBFvcvZ5r6wvqkjTs/edit?usp=sharing)
+  - Due: 12/08/2020 (Friday) 5:00 PM
+  - Sample solutions will be available after due
+
+- Office hours
+  - Monday 9:00 - 10:00am (EST)
+  - Wednesday 12:30 - 1:30pm (EST)
+  - Office hour Zoom link [HERE](https://nyu.zoom.us/j/9985119253)
+
+---
+
+## Today's Topics
+
+- Bias-Variance Tradeoff
+- Regularization
+  - Lasso
+  - Ridge
+  - Elastic Net
+
+---
+class: inverse, center, middle
+
+# Bias-Variance Tradeoff
+
+---
+
+## Recall on Regression Models
+
+One of the purposes is to predict (estimate) dependent variables using one or many independent variables (predictors), assuming a linear relationship. We fit a regression model to sample data in order to predict population parameters.
+
+**Predict population parameter using ordinary least squares approach:**
+
+$$Y = \beta_0 + \beta_1 \cdot X_i + \varepsilon$$
+
+$$\hat{\beta_1} = ||(y - \beta_0) - X\hat{\beta_1}||^2 = \mathcal{argmin}\sum_{i=1}^n \left( (y_i - \beta_0) - x'_i\hat{\beta_1} \right)^2$$
+
+We minimize the above loss function to esimate the population parameter $\beta_1$. (Ordinary Least Squares)
+
+*Demo*: [Linear Regression Simulator](https://a3sr-2003-iqm.shinyapps.io/2003iqm/)
+
+---
+
+## Loss Function
+
+Loss function: assuming the intercept is zero,
+
+$$\mathcal{L}_\text{OLS}(\hat{\beta}) = \sum_{i=1}^n \left(y_i - x'_i\hat{\beta} \right)^2$$
+
+```{r sim-data, echo=FALSE}
+set.seed(11)
+x <- rnorm(50, mean = 10, sd = 1)
+error <- rnorm(50)
+beta <- 2
+y <- beta * x + error
+dat_sim <- data.frame(x = x, y = y)
+p <- ggplot(dat_sim, aes(x = x, y = y)) + 
+  geom_point() + 
+  geom_smooth(method = "lm", se = FALSE) + 
+  geom_hline(yintercept = mean(dat_sim$y), linetype = "dashed", col = "red")
+ggplotly(p)
+```
+
+---
+
+## Bias and Variance
+
+**Bias**: the difference between the population parameter ($\beta$) and the estimated parameter ($\hat{\beta}$):
+
+$$\textbf{Bias}(\hat{\beta}_\text{OLS}) = \hat{\beta}_\text{OLS} - \beta$$
+
+**Variance**: the spread, or uncertainty, of parameter estimates. 
+
+$$\mathcal{X}\hat{\beta} = \mathcal{Y} \\ \hat{\beta} = \frac{\mathcal{Y}}{\mathcal{X}} \\ \textbf{Var}(\hat{\beta}) = \frac{\sigma_{\text{error}}^2}{\mathcal{X}} = \frac{\frac{\varepsilon'\varepsilon}{n - k}}{\mathcal{X}}$$
+
+---
+
+## Bias and Variance Combinations
+
+![Source: kdnuggets.com](_images/bias-and-variance.jpg)
+
+---
+
+## Demo
+
+```{r demo, echo=FALSE}
+p1 <- p + 
+  geom_abline(intercept = 12, slope = 1, col = "yellow") + 
+  geom_line(col = "dark gray")
+ggplotly(p1)
+```
+
+---
+
+## Bias-Variance Tradeoff
+
+**Overfit**: model is too complex and contains too many noises.
+
+**Underfit**: model is too simple and does not reflect features.
+
+![Source: researchgate.net](_images/tradeoff.png)
+
+---
+
+## Demo
+
+```{r demo2, echo=FALSE}
+p1 <- ggplot(dat_sim, aes(x = x, y = y)) + 
+  geom_point() +
+  geom_line(col = "dark gray") + 
+  geom_hline(yintercept = mean(dat_sim$y), col = "red")
+ggplotly(p1)
+```
+
+---
+class: inverse, center, middle
+
+# Regularization
+
+---
+
+## Regularizaton
+
+Recall that, in model selection, we started from a simple model called baseline model. For example, we use mean model or simple linear regression: 
+
+$$Y_1 = \frac{\sum_{i=1}^n x_i}{n} \\ Y_2 = \beta_0 + \beta_1 X + \varepsilon$$
+
+When we increase model complexity, we increase the risk of overfitting. Therefore, we regularize model variance by introducing a penalty parameter, $\lambda$, to our loss function: 
+
+$$\mathcal{L}(\hat{\beta}) = \sum_{i=1}^n \left(y_i - x'_i\hat{\beta} \right)^2 + \lambda\sum_{j=1}^m\hat{\beta_j}^2$$
+
+---
+
+## Ridge Regression
+
+Solving the function, we get $\hat{\beta}$ as: 
+
+$$\hat{\beta} = \frac{\mathcal{Y}}{\mathcal{X} + \lambda} \\ \textbf{Bias}(\hat{\beta}) = \hat{\beta} - \beta \\ \textbf{Var}(\hat{\beta}) = \frac{\sigma_{\text{error}}^2}{\mathcal{X} + \lambda}$$
+
+The $\lambda$ parameter is the regularization penalty: 
+
+$$\lambda \to 0, \hat{\beta}_\text{ridge} \to \hat{\beta}_\text{OLS} \\ \lambda \to \infty, \hat{\beta}_\text{ridge} \to 0$$
+
+---
+
+## Lasso Regression
+
+Lasso, or least absolute shrinkage and selection operator, penalizes the sum of absolute coefficients: 
+
+$$\mathcal{L}(\hat{\beta}) = \sum_{i=1}^n \left(y_i - x'_i\hat{\beta} \right)^2 + \lambda\sum_{j=1}^m|\hat{\beta_j}| \\ \hat{\beta} = \frac{\mathcal{Y} - \lambda}{\mathcal{X}}$$
+
+---
+
+## Ridge and Lasso
+
+Ridge Regression: (L2 penalty)
+
+$$\mathcal{L}_\text{ridge}(\hat{\beta}) = \sum_{i=1}^n \left(y_i - x'_i\hat{\beta} \right)^2 + \lambda\sum_{j=1}^m\hat{\beta_j}^2$$
+
+Lasso Regression: (L1 penalty)
+
+$$\mathcal{L}_{\text{lasso}}(\hat{\beta}) = \sum_{i=1}^n \left(y_i - x'_i\hat{\beta} \right)^2 + \lambda\sum_{j=1}^m|\hat{\beta_j}|$$
+
+Lasso can set some coefficients to zero. Thus, it can perform variable selection while Ridge cannot. 
+
+---
+
+## Elastic Net
+
+The combination of L1 (Lasso) and L2 (Ridge) penalties. 
+
+$$\mathcal{L}_\text{elastic net} = \frac{\sum_{i=1}^n(y_i - x_i'\hat{\beta})^2}{2n} + \lambda\left(\frac{1-\alpha}{2}\sum_{j=1}^m\hat{\beta_j}^2 + \alpha\sum_{j=1}^m|\hat{\beta_j}|\right),$$
+
+where $\alpha$ is the mixing parameter between ridge ($\alpha = 0$) and lasso ($\alpha = 1$).
+
+---
+
+## Contact
+
+Tong Jin
+
+- Email: tj1061@nyu.edu
+- Office Hours
+  - Mondays, 9 - 10am (EST)
+  - Wednesdays, 12:30 - 1:30pm (EST)
+

@@ -80,16 +80,21 @@ a_assignment_solution <- "https://drive.google.com/drive/folders/1b3fHkxC81ov2Sw
 # UI ---------------------------------------------------------------
 ui <- navbarPage(  # Create pages with a top level navi bar
   
-  # App Title ----
-  title = "NYU APSTA-GE: 2003 Intermediate Quantitative Methods",
-  header = tags$img(src = "NYU_flag.jpg", alt = "NYU Flag", style = "width:50%; max_width:100px; height:auto"),
+  div(
+    img(src = "NYU_flag.jpg", alt = "NYU Flag", 
+        style = "width:70%; max_width:100px; height:auto"),
+    h2("APSTA-GE.2003: Intermediate Quantitative Methods: General Linear Model"),
+    h3("Course Site"),
+    br(),
+    h4("Instructor: ", a(href=a_ying_lu_nyu, "Ying Lu"))
+  ),
+  title = "NYU APSTA-GE 2003 Course Site",
   
   # Page 1: home ----
-  tabPanel(title = "Home", class = "home",
+  tabPanel(title = "Fall 2020", class = "home",
     
     div(id = "home-title",
-      h4("APSTA-GE.2003: Intermediate Quantitative Methods: General Linear Model"),
-      h4(tags$b("Course Site"))
+      h4("APSTA-GE.2003: Intermediate Quantitative Methods: General Linear Model")
     ),
     hr(),  # Horizontal line
     
@@ -486,6 +491,12 @@ ui <- navbarPage(  # Create pages with a top level navi bar
 
 # Server -----------------------------------------------------------------------
 server <- function (input, output) {
+  
+  observeEvent(
+    input$link_to_course_info, {
+      tags$a(href = "#home-navi-info-syllabus")
+    }
+  )
   
   ####
   # LR Simulator ----

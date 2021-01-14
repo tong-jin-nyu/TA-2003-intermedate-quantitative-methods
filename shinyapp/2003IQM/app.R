@@ -4,7 +4,7 @@
 # Subtitle: Shiny Course Site
 # 
 # Data Created: 10/14/2020
-# Data Modified: 12/01/2020
+# Data Modified: 01/13/2021
 #
 # ----- ----- Author ----- -----
 #
@@ -21,7 +21,7 @@
 # Affiliation: New York University
 #
 # ----- ----- Copyright ----- -----
-# Copyright (c) Ying Lu, 2020
+# Copyright (c) Ying Lu, 2019-2021
 # 
 # ----- ----- Contents ----- -----
 # 
@@ -82,13 +82,14 @@ ui <- navbarPage(  # Create pages with a top level navi bar
   
   # App Title ----
   title = "NYU APSTA-GE: 2003 Intermediate Quantitative Methods",
+  header = tags$img(src = "NYU_flag.jpg", alt = "NYU Flag", style = "width:50%; max_width:100px; height:auto"),
   
   # Page 1: home ----
   tabPanel(title = "Home", class = "home",
     
     div(id = "home-title",
       h4("APSTA-GE.2003: Intermediate Quantitative Methods: General Linear Model"),
-      h4(tags$b("Fall 2020"))
+      h4(tags$b("Course Site"))
     ),
     hr(),  # Horizontal line
     
